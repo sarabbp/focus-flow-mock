@@ -204,12 +204,8 @@ function Dashboard() {
         <div className="flex-1 overflow-y-auto p-6">
           <div className="mx-auto max-w-4xl space-y-6">
             {showSetup && !plan && (
-              <AiSetupBar
-                loading={loading}
-                calendarConnected={calendarConnected}
-                onSubmit={handleSubmit}
-                onConnectCalendar={() => setCalendarConnected((v) => !v)}
-              />
+              <AiSetupBar loading={loading} onSubmit={handleSubmit} />
+
             )}
             {showSetup && plan && (
               <GeneratedPlan
