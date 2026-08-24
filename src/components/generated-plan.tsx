@@ -21,10 +21,18 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import type { DraftPlan } from "@/lib/onboarding-storage";
+import {
+  DEFAULT_WORK_SETTINGS,
+  WEEKDAY_LABELS,
+  formatClock,
+  scheduleEntries,
+  type WorkSettings,
+} from "@/lib/schedule";
 
 interface GeneratedPlanProps {
   plan: DraftPlan;
   calendarConnected: boolean;
+  settings?: WorkSettings;
   onChange: (plan: DraftPlan) => void;
   onApprove: () => void;
   onDismiss: () => void;
@@ -33,6 +41,7 @@ interface GeneratedPlanProps {
 export function GeneratedPlan({
   plan,
   calendarConnected,
+  settings = DEFAULT_WORK_SETTINGS,
   onChange,
   onApprove,
   onDismiss,
@@ -40,6 +49,9 @@ export function GeneratedPlan({
   const [editing, setEditing] = useState(false);
   const [newTag, setNewTag] = useState("");
   const [dragId, setDragId] = useState<string | null>(null);
+  // Live preview of when each task will land, recomputed on every reorder.
+  const scheduled = scheduleEntries([], plan.entries, settings);
+  const slotFor = (id: string) => scheduled.find((e) => e.id === id);
   const rateLabel = plan.rate.trim() ? `$${plan.rate.trim()}/h` : "Rate not set";
 
   const patch = (p: Partial<DraftPlan>) => onChange({ ...plan, ...p });
@@ -224,6 +236,11 @@ export function GeneratedPlan({
                   className="w-24"
                   aria-label="Duration"
                 />
+                <span className="w-40 flex-shrink-0 text-xs text-muted-foreground">
+                  {slotFor(entry.id)
+                    ? `${WEEKDAY_LABELS[slotFor(entry.id)!.day ?? 0]} ${slotFor(entry.id)!.start} – ${slotFor(entry.id)!.end}`
+                    : "—"}
+                </span>
                 <button
                   type="button"
                   onClick={() => moveEntry(entry.id, index - 1)}
@@ -293,7 +310,12 @@ export function GeneratedPlan({
               >
                 <span className="h-1.5 w-1.5 rounded-full bg-timer" />
                 {entry.title}
-                <span className="text-xs text-muted-foreground">{entry.duration}</span>
+                <span className="text-xs text-muted-foreground">
+                  {entry.duration}
+                  {slotFor(entry.id)
+                    ? ` · ${WEEKDAY_LABELS[slotFor(entry.id)!.day ?? 0]} ${slotFor(entry.id)!.start}`
+                    : ""}
+                </span>
               </button>
             ))}
           </div>
@@ -366,6 +388,14 @@ export function GeneratedPlan({
         >
           Start over
         </button>
+        <p className="w-full text-xs text-muted-foreground">
+          Scheduled {formatClock(settings.startHour)}–{formatClock(settings.endHour)} with a{" "}
+          {settings.gapMinutes}m buffer between tasks
+          {settings.lunchEnd > settings.lunchStart
+            ? `, skipping lunch (${formatClock(settings.lunchStart)}–${formatClock(settings.lunchEnd)})`
+            : ""}
+          . Reorder tasks to change the times.
+        </p>
       </div>
 
     </section>
