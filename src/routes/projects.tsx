@@ -53,33 +53,34 @@ const columns = [
   { label: "Fixed fee", sortable: false, className: "w-[10%] text-right" },
 ];
 
-function toRows(plan: DraftPlan | null): ProjectRow[] {
-  if (!plan || !plan.project) return [];
-  const totalMinutes = plan.entries.reduce((sum, entry) => {
-    const h = /(\d+)\s*h/.exec(entry.duration)?.[1];
-    const m = /(\d+)\s*m/.exec(entry.duration)?.[1];
-    return sum + (h ? Number(h) * 60 : 0) + (m ? Number(m) : 0);
-  }, 0);
-  const hours = Math.floor(totalMinutes / 60);
-  const mins = totalMinutes % 60;
-  return [
-    {
-      id: "plan-project",
-      name: plan.project,
-      client: plan.client || "No client",
-      rate: plan.rate.trim() || "—",
-      currency: "USD",
-      dates: "Aug 24 - 28",
-      timeStatus: totalMinutes ? `${hours ? `${hours}h ` : ""}${mins}m` : "No time tracked",
-    },
-  ];
+function toRows(plans: DraftPlan[]): ProjectRow[] {
+  return plans
+    .filter((plan) => !!plan.project)
+    .map((plan, index) => {
+      const totalMinutes = plan.entries.reduce((sum, entry) => {
+        const h = /(\d+)\s*h/.exec(entry.duration)?.[1];
+        const m = /(\d+)\s*m/.exec(entry.duration)?.[1];
+        return sum + (h ? Number(h) * 60 : 0) + (m ? Number(m) : 0);
+      }, 0);
+      const hours = Math.floor(totalMinutes / 60);
+      const mins = totalMinutes % 60;
+      return {
+        id: `plan-project-${index}`,
+        name: plan.project,
+        client: plan.client || "No client",
+        rate: plan.rate.trim() || "—",
+        currency: "USD",
+        dates: "Aug 24 - 28",
+        timeStatus: totalMinutes ? `${hours ? `${hours}h ` : ""}${mins}m` : "No time tracked",
+      };
+    });
 }
 
 function ProjectsPage() {
   const [rows, setRows] = useState<ProjectRow[]>([]);
 
   useEffect(() => {
-    setRows(toRows(loadState()?.plan ?? null));
+    setRows(toRows(loadState()?.plans ?? []));
   }, []);
 
   return (

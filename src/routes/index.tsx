@@ -42,12 +42,14 @@ function Dashboard() {
   const [calendarConnected, setCalendarConnected] = useState(false);
   const [loading, setLoading] = useState(false);
   const [plan, setPlan] = useState<DraftPlan | null>(null);
+  const [plans, setPlans] = useState<DraftPlan[]>([]);
   const [showSetup, setShowSetup] = useState(true);
   const [entries, setEntries] = useState<TimeEntry[]>([]);
   const [timerEntry, setTimerEntry] = useState<TimerEntry | null>(null);
   const [activeTimer, setActiveTimer] = useState<string | null>(null);
   const [addOpen, setAddOpen] = useState(false);
   const approvedRef = useRef(false);
+  const addModeRef = useRef(false);
 
   // Load persisted setup state on first client render.
   useEffect(() => {
@@ -56,6 +58,7 @@ function Dashboard() {
       setPrompt(saved.prompt);
       setCalendarConnected(saved.calendarConnected);
       setPlan(saved.plan);
+      setPlans(saved.plans);
       setEntries(saved.entries);
       setTimerEntry(saved.timerEntry);
       approvedRef.current = saved.approved;
@@ -74,15 +77,17 @@ function Dashboard() {
       prompt,
       calendarConnected,
       plan,
+      plans,
       entries,
       timerEntry,
       approved: approvedRef.current,
     });
-  }, [hydrated, prompt, calendarConnected, plan, entries, timerEntry]);
+  }, [hydrated, prompt, calendarConnected, plan, plans, entries, timerEntry]);
 
   const rerun = useCallback(() => {
     setPlan(null);
     setLoading(false);
+    addModeRef.current = false;
     approvedRef.current = false;
     setShowSetup(true);
   }, []);
@@ -104,9 +109,18 @@ function Dashboard() {
 
   const handleApprove = () => {
     if (!plan) return;
-    setEntries(plan.entries);
+    const adding = addModeRef.current;
+    const suffix = `p${plans.length + 1}`;
+    const newEntries = plan.entries.map((entry) => ({
+      ...entry,
+      id: adding ? `${entry.id}-${suffix}` : entry.id,
+    }));
+
+    setEntries((prev) => (adding ? [...prev, ...newEntries] : newEntries));
+    setPlans((prev) => (adding ? [...prev, plan] : [plan]));
+
     const next: TimerEntry = {
-      id: "approved-timer",
+      id: adding ? `timer-${suffix}` : "approved-timer",
       title: `Working on ${plan.project || "your project"}`,
       project: plan.project || "Main project",
       client: plan.client || "Client",
@@ -116,10 +130,17 @@ function Dashboard() {
     setTimerEntry(next);
     setActiveTimer(next.id);
     approvedRef.current = true;
+    addModeRef.current = false;
     setShowSetup(false);
-    toast.success("Workspace created!", {
-      description:
-        "We added your new client, project, and tasks to the left sidebar.",
+    const sameClient =
+      adding &&
+      plans.some((p) => p.client.trim().toLowerCase() === plan.client.trim().toLowerCase());
+    toast.success(adding ? "Project added!" : "Workspace created!", {
+      description: adding
+        ? sameClient
+          ? `Added ${plan.project} and its tasks under ${plan.client}.`
+          : `Added ${plan.client} with ${plan.project} and its tasks.`
+        : "We added your new client, project, and tasks to the left sidebar.",
       duration: 2000,
     });
   };
@@ -138,6 +159,7 @@ function Dashboard() {
   }, []);
 
   const handleAiAdd = (value: string) => {
+    addModeRef.current = true;
     setShowSetup(true);
     handleSubmit(value);
   };

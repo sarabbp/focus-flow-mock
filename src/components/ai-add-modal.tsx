@@ -31,13 +31,19 @@ export function AiAddModal({ open, onOpenChange, onSubmit }: AiAddModalProps) {
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-lg">
+      <DialogContent
+        className="sm:max-w-lg"
+        aria-labelledby="ai-add-title"
+        aria-describedby="ai-add-description"
+        onEscapeKeyDown={() => onOpenChange(false)}
+      >
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2 text-base">
-            <Sparkles className="h-4 w-4 text-primary" /> AI Add Project
+          <DialogTitle id="ai-add-title" className="flex items-center gap-2 text-base">
+            <Sparkles className="h-4 w-4 text-primary" aria-hidden="true" /> AI Add Project
           </DialogTitle>
-          <DialogDescription>
-            Describe the work and we'll create the client, project and task cards.
+          <DialogDescription id="ai-add-description">
+            Describe the work and we'll create the client, project and task cards. Press Escape to
+            close.
           </DialogDescription>
         </DialogHeader>
 
@@ -46,6 +52,7 @@ export function AiAddModal({ open, onOpenChange, onSubmit }: AiAddModalProps) {
             e.preventDefault();
             if (value.trim()) submit(value.trim());
           }}
+          aria-label="AI add project"
           className="flex items-center gap-2 rounded-xl border border-border bg-panel px-3 py-2 focus-within:border-primary/50 focus-within:ring-2 focus-within:ring-primary/15"
         >
           <input
@@ -57,17 +64,18 @@ export function AiAddModal({ open, onOpenChange, onSubmit }: AiAddModalProps) {
             className="h-9 flex-1 bg-transparent text-sm text-foreground outline-none placeholder:text-muted-foreground"
           />
           <Button type="submit" size="sm" disabled={!value.trim()} className="gap-1.5">
-            Generate <ArrowRight className="h-3.5 w-3.5" />
+            Generate <ArrowRight className="h-3.5 w-3.5" aria-hidden="true" />
           </Button>
         </form>
 
-        <div className="flex flex-wrap gap-2">
+        <div className="flex flex-wrap gap-2" role="group" aria-label="Quick start examples">
           {QUICK_PILLS.map((pill) => (
             <button
               key={pill.label}
               type="button"
               onClick={() => submit(pill.prompt)}
-              className="rounded-full border border-border bg-background px-3 py-1.5 text-xs font-medium text-foreground transition-colors hover:border-primary/40 hover:bg-secondary"
+              aria-label={`Use example: ${pill.label}`}
+              className="rounded-full border border-border bg-background px-3 py-1.5 text-xs font-medium text-foreground transition-colors hover:border-primary/40 hover:bg-secondary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
             >
               {pill.label}
             </button>

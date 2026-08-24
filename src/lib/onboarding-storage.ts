@@ -13,6 +13,8 @@ export interface PersistedState {
   prompt: string | null;
   calendarConnected: boolean;
   plan: DraftPlan | null;
+  /** Every approved plan, in the order they were created. */
+  plans: DraftPlan[];
   entries: TimeEntry[];
   timerEntry: TimerEntry | null;
   approved: boolean;
@@ -50,6 +52,7 @@ export function loadState(): PersistedState | null {
       prompt: parsed.prompt ?? null,
       calendarConnected: !!parsed.calendarConnected,
       plan: parsed.plan ?? null,
+      plans: Array.isArray(parsed.plans) ? parsed.plans : parsed.plan ? [parsed.plan] : [],
       entries: Array.isArray(parsed.entries) ? parsed.entries : [],
       timerEntry: parsed.timerEntry ?? null,
       approved: !!parsed.approved,
