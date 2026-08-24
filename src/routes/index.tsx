@@ -46,6 +46,7 @@ function Dashboard() {
   const [entries, setEntries] = useState<TimeEntry[]>([]);
   const [timerEntry, setTimerEntry] = useState<TimerEntry | null>(null);
   const [activeTimer, setActiveTimer] = useState<string | null>(null);
+  const [addOpen, setAddOpen] = useState(false);
   const approvedRef = useRef(false);
 
   // Load persisted setup state on first client render.
