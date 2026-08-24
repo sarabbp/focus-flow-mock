@@ -53,6 +53,7 @@ function Dashboard() {
   const [addOpen, setAddOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const { settings, update: updateSettings } = useWorkSettings();
+  const [addMode, setAddMode] = useState(false);
   const approvedRef = useRef(false);
   const addModeRef = useRef(false);
 
@@ -93,6 +94,7 @@ function Dashboard() {
     setPlan(null);
     setLoading(false);
     addModeRef.current = false;
+    setAddMode(false);
     approvedRef.current = false;
     setShowSetup(true);
   }, []);
@@ -140,6 +142,7 @@ function Dashboard() {
     setActiveTimer(next.id);
     approvedRef.current = true;
     addModeRef.current = false;
+    setAddMode(false);
     setShowSetup(false);
     const sameClient =
       adding &&
@@ -169,6 +172,7 @@ function Dashboard() {
 
   const handleAiAdd = (value: string) => {
     addModeRef.current = true;
+    setAddMode(true);
     setShowSetup(true);
     handleSubmit(value);
   };
@@ -212,6 +216,7 @@ function Dashboard() {
                 plan={plan}
                 calendarConnected={calendarConnected}
                 settings={settings}
+                existingEntries={addMode ? entries : []}
                 onChange={setPlan}
                 onApprove={handleApprove}
                 onDismiss={rerun}

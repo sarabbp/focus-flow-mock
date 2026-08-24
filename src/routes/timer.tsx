@@ -37,6 +37,7 @@ import {
   type WorkSettings,
 } from "@/lib/schedule";
 import type { TimeEntry } from "@/components/recent-entries";
+import { projectColor } from "@/lib/project-colors";
 
 export const Route = createFileRoute("/timer")({
   head: () => ({
@@ -391,7 +392,9 @@ function TimerPage() {
 
                 {positioned
                   .filter((p) => p.day === day.weekday)
-                  .map(({ entry, start, end }) => (
+                  .map(({ entry, start, end }) => {
+                    const color = projectColor(entry.project);
+                    return (
                     <div
                       key={entry.id}
                       draggable
@@ -399,21 +402,26 @@ function TimerPage() {
                       onDragEnd={() => setDragId(null)}
                       title="Drag to reschedule — buffer and lunch rules are enforced"
                       className={cn(
-                        "absolute left-1 right-1 cursor-grab overflow-hidden rounded-md border border-timer/30 bg-timer/10 px-2 py-1 text-left active:cursor-grabbing",
-                        dragId === entry.id && "opacity-50 ring-2 ring-timer/40",
+                        "absolute left-1 right-1 cursor-grab overflow-hidden rounded-md border px-2 py-1 text-left active:cursor-grabbing",
+                        color.border,
+                        color.bg,
+                        dragId === entry.id && "opacity-50 ring-2 ring-primary/40",
                       )}
                       style={{
                         top: (start - gridStart) * ROW_HEIGHT,
                         height: Math.max((end - start) * ROW_HEIGHT - 2, 20),
                       }}
                     >
-                      <p className="truncate text-xs font-semibold text-timer">{entry.title}</p>
-                      <p className="truncate text-[11px] text-timer/80">
+                      <p className={cn("truncate text-xs font-semibold", color.text)}>
+                        {entry.title}
+                      </p>
+                      <p className={cn("truncate text-[11px] opacity-80", color.text)}>
                         {entry.start} – {entry.end} · {entry.duration}
                       </p>
                       <p className="truncate text-[11px] text-muted-foreground">{entry.project}</p>
                     </div>
-                  ))}
+                    );
+                  })}
               </div>
             ))}
           </div>
