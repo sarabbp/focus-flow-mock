@@ -16,13 +16,26 @@ import {
   Plus,
   Hash,
   Minus,
+  UtensilsCrossed,
+  Clock,
 } from "lucide-react";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
+import { toast } from "sonner";
 
 import { Sidebar } from "@/components/sidebar";
+import { WorkSettingsDialog } from "@/components/work-settings-dialog";
 import { cn } from "@/lib/utils";
-import { loadState } from "@/lib/onboarding-storage";
+import { loadState, saveState } from "@/lib/onboarding-storage";
+import { useWorkSettings } from "@/lib/work-settings";
+import {
+  WEEKDAY_LABELS,
+  formatClock,
+  moveEntryToSlot,
+  parseClock,
+  rescheduleAll,
+  type WorkSettings,
+} from "@/lib/schedule";
 import type { TimeEntry } from "@/components/recent-entries";
 
 export const Route = createFileRoute("/timer")({
@@ -39,26 +52,6 @@ export const Route = createFileRoute("/timer")({
   component: TimerPage,
 });
 
-const days = [
-  { date: 24, label: "Mon", active: true },
-  { date: 25, label: "Tue" },
-  { date: 26, label: "Wed" },
-  { date: 27, label: "Thu" },
-  { date: 28, label: "Fri" },
-];
-
-/** "9:30 AM" -> 9.5 (hours since midnight) */
-function parseTime(value: string): number | null {
-  const m = value.trim().match(/^(\d{1,2})(?::(\d{2}))?\s*(AM|PM)?$/i);
-  if (!m) return null;
-  let h = Number(m[1]);
-  const min = Number(m[2] ?? 0);
-  const period = m[3]?.toUpperCase();
-  if (period === "PM" && h !== 12) h += 12;
-  if (period === "AM" && h === 12) h = 0;
-  return h + min / 60;
-}
-
 function formatTotal(minutes: number) {
   if (minutes <= 0) return "–";
   const h = Math.floor(minutes / 60);
@@ -66,44 +59,109 @@ function formatTotal(minutes: number) {
   return h > 0 ? (m > 0 ? `${h}h ${m}m` : `${h}h`) : `${m}m`;
 }
 
-const hours = Array.from({ length: 13 }, (_, i) => i + 7); // 7:00 → 19:00
-
 function hourLabel(h: number) {
   const suffix = h < 12 ? "AM" : "PM";
   const display = h % 12 === 0 ? 12 : h % 12;
   return `${display}:00 ${suffix}`;
 }
 
-const WORK_START = 9;
-const WORK_END = 17;
 const ROW_HEIGHT = 64; // matches h-16
-const GRID_START = 7;
+const MONDAY_DATE = 24;
 
 function TimerPage() {
   const [entries, setEntries] = useState<TimeEntry[]>([]);
+  const [hydrated, setHydrated] = useState(false);
+  const [settingsOpen, setSettingsOpen] = useState(false);
+  const [dragId, setDragId] = useState<string | null>(null);
+  const { settings, update } = useWorkSettings();
 
   useEffect(() => {
     const saved = loadState();
     if (saved?.entries?.length) setEntries(saved.entries);
+    setHydrated(true);
   }, []);
+
+  const persist = useCallback((next: TimeEntry[]) => {
+    setEntries(next);
+    const saved = loadState();
+    if (saved) saveState({ ...saved, entries: next });
+  }, []);
+
+  const applySettings = (next: WorkSettings) => {
+    update(next);
+    if (entries.length) persist(rescheduleAll(entries, next));
+    toast.success("Working hours updated", {
+      description: "Your schedule was recalculated with the new hours, buffer and lunch block.",
+      duration: 2500,
+    });
+  };
+
+  const gridStart = Math.min(7, Math.floor(settings.startHour) - 1);
+  const gridEnd = Math.max(19, Math.ceil(settings.endHour) + 1);
+  const hours = Array.from({ length: gridEnd - gridStart }, (_, i) => i + gridStart);
+  const hasLunch = settings.lunchEnd > settings.lunchStart;
+
+  const days = (settings.weekdays.length ? settings.weekdays : [0]).map((weekday) => ({
+    weekday,
+    label: WEEKDAY_LABELS[weekday] ?? "Day",
+    date: MONDAY_DATE + weekday,
+    active: weekday === 0,
+  }));
 
   const positioned = entries
     .map((entry) => {
-      const start = parseTime(entry.start);
-      const end = parseTime(entry.end);
+      const start = parseClock(entry.start);
+      const end = parseClock(entry.end);
       if (start === null || end === null || end <= start) return null;
       return { entry, start, end, minutes: (end - start) * 60, day: entry.day ?? 0 };
     })
-    .filter(
-      (v): v is { entry: TimeEntry; start: number; end: number; minutes: number; day: number } =>
-        !!v,
-    );
+    .filter((v): v is NonNullable<typeof v> => !!v);
 
   const loggedMinutes = positioned.reduce((sum, p) => sum + p.minutes, 0);
-  const loggedLabel = formatTotal(loggedMinutes);
-  const dayTotals = days.map((_, index) =>
-    positioned.filter((p) => p.day === index).reduce((sum, p) => sum + p.minutes, 0),
+  const dayTotals = days.map(({ weekday }) =>
+    positioned.filter((p) => p.day === weekday).reduce((sum, p) => sum + p.minutes, 0),
   );
+
+  /** Buffer strips between consecutive tasks on a day. */
+  const buffersFor = (weekday: number) => {
+    const sorted = positioned.filter((p) => p.day === weekday).sort((a, b) => a.start - b.start);
+    const out: { key: string; start: number; end: number }[] = [];
+    for (let i = 0; i < sorted.length - 1; i += 1) {
+      const gapStart = sorted[i]!.end;
+      const gapEnd = sorted[i + 1]!.start;
+      if (gapEnd - gapStart > 0.001 && gapEnd - gapStart <= 1.01) {
+        if (hasLunch && gapStart < settings.lunchEnd && gapEnd > settings.lunchStart) continue;
+        out.push({ key: `${sorted[i]!.entry.id}-buffer`, start: gapStart, end: gapEnd });
+      }
+    }
+    return out;
+  };
+
+  const handleDrop = (weekday: number, e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    if (!dragId) return;
+    const rect = e.currentTarget.getBoundingClientRect();
+    const offset = (e.clientY - rect.top) / ROW_HEIGHT + gridStart;
+    const next = moveEntryToSlot(entries, dragId, weekday, offset, settings);
+    const moved = next.find((entry) => entry.id === dragId);
+    const before = entries.find((entry) => entry.id === dragId);
+    setDragId(null);
+    if (!moved || (moved.start === before?.start && moved.day === before?.day)) {
+      toast("Kept at the nearest valid slot", {
+        description: "That time clashed with lunch, another task, or your buffer.",
+      });
+      return;
+    }
+    persist(next);
+    toast.success(`Moved to ${WEEKDAY_LABELS[weekday]} ${moved.start}`, {
+      description: `Snapped to keep the ${settings.gapMinutes}m buffer and lunch block clear.`,
+      duration: 2500,
+    });
+  };
+
+  const lunchLabel = hasLunch
+    ? `Lunch · ${formatClock(settings.lunchStart)} – ${formatClock(settings.lunchEnd)}`
+    : "";
 
   return (
     <div className="flex h-screen w-full overflow-hidden bg-panel">
@@ -166,9 +224,10 @@ function TimerPage() {
           <div className="flex items-center gap-2">
             <button
               type="button"
+              onClick={() => setSettingsOpen(true)}
               className="flex items-center gap-2 rounded-lg border border-border px-3 py-1.5 text-sm font-medium text-foreground hover:bg-secondary"
             >
-              5 Days
+              {days.length} Days
               <ChevronDown className="h-4 w-4 text-muted-foreground" />
             </button>
             <div className="flex items-center rounded-lg border border-border">
@@ -179,7 +238,8 @@ function TimerPage() {
             </div>
             <button
               type="button"
-              aria-label="Settings"
+              aria-label="Working hours settings"
+              onClick={() => setSettingsOpen(true)}
               className="flex h-8 w-8 items-center justify-center rounded-lg text-muted-foreground hover:bg-secondary"
             >
               <Settings className="h-4 w-4" />
@@ -200,14 +260,24 @@ function TimerPage() {
           <div className="h-1.5 w-40 overflow-hidden rounded-full bg-secondary">
             <div className="h-full w-3/4 rounded-full bg-timer" />
           </div>
-          <span className="font-semibold text-foreground">{loggedLabel}</span>
-          <span className="ml-2 font-medium text-muted-foreground">Planned</span>
-          <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-secondary">
-            <div className="h-full w-5/6 rounded-full bg-timer" />
-          </div>
-          <span className="font-semibold text-foreground">4h 45m</span>
-          <button type="button" className="ml-2 inline-flex items-center gap-1 font-medium text-foreground hover:text-timer">
-            View reports
+          <span className="font-semibold text-foreground">{formatTotal(loggedMinutes)}</span>
+          <span className="ml-2 inline-flex items-center gap-1.5 rounded-full bg-secondary px-2 py-0.5 font-medium text-muted-foreground">
+            <Clock className="h-3 w-3" /> {formatClock(settings.startHour)} – {formatClock(settings.endHour)}
+          </span>
+          {hasLunch && (
+            <span className="inline-flex items-center gap-1.5 rounded-full bg-secondary px-2 py-0.5 font-medium text-muted-foreground">
+              <UtensilsCrossed className="h-3 w-3" /> {lunchLabel}
+            </span>
+          )}
+          <span className="inline-flex items-center gap-1.5 rounded-full bg-secondary px-2 py-0.5 font-medium text-muted-foreground">
+            {settings.gapMinutes}m buffer between tasks
+          </span>
+          <button
+            type="button"
+            onClick={() => setSettingsOpen(true)}
+            className="ml-auto inline-flex items-center gap-1 font-medium text-foreground hover:text-timer"
+          >
+            Edit working hours
             <ChevronRight className="h-3.5 w-3.5" />
           </button>
         </div>
@@ -270,37 +340,70 @@ function TimerPage() {
                 </div>
               ))}
             </div>
-            {days.map((day, dayIndex) => (
-              <div key={day.label} className="relative flex-1 border-l border-border">
+            {days.map((day) => (
+              <div
+                key={day.label}
+                className="relative flex-1 border-l border-border"
+                onDragOver={(e) => e.preventDefault()}
+                onDrop={(e) => handleDrop(day.weekday, e)}
+              >
                 {hours.map((h) => (
                   <div
                     key={h}
                     className={cn(
                       "h-16 border-b border-border/60",
-                      h >= WORK_START && h < WORK_END ? "bg-background" : "bg-secondary/60",
+                      h >= Math.floor(settings.startHour) && h < settings.endHour
+                        ? "bg-background"
+                        : "bg-secondary/60",
                     )}
                   />
                 ))}
-                {/* Lunch block 1pm – 2pm */}
-                <div
-                  className="absolute left-1 right-1 flex items-center justify-center rounded-md border border-border bg-secondary"
-                  style={{
-                    top: (13 - GRID_START) * ROW_HEIGHT,
-                    height: ROW_HEIGHT - 2,
-                  }}
-                >
-                  <span className="text-[11px] font-medium text-muted-foreground">
-                    Lunch · 1:00 – 2:00 PM
-                  </span>
-                </div>
+
+                {/* Lunch block */}
+                {hasLunch && (
+                  <div
+                    className="pointer-events-none absolute left-1 right-1 flex items-center justify-center gap-1.5 rounded-md border border-dashed border-border bg-secondary"
+                    style={{
+                      top: (settings.lunchStart - gridStart) * ROW_HEIGHT,
+                      height: Math.max((settings.lunchEnd - settings.lunchStart) * ROW_HEIGHT - 2, 18),
+                    }}
+                  >
+                    <UtensilsCrossed className="h-3 w-3 text-muted-foreground" />
+                    <span className="text-[11px] font-medium text-muted-foreground">{lunchLabel}</span>
+                  </div>
+                )}
+
+                {/* Buffer strips */}
+                {buffersFor(day.weekday).map((buffer) => (
+                  <div
+                    key={buffer.key}
+                    className="pointer-events-none absolute left-1 right-1 flex items-center justify-center rounded-sm bg-[repeating-linear-gradient(45deg,transparent,transparent_4px,var(--color-border)_4px,var(--color-border)_5px)]"
+                    style={{
+                      top: (buffer.start - gridStart) * ROW_HEIGHT,
+                      height: Math.max((buffer.end - buffer.start) * ROW_HEIGHT, 12),
+                    }}
+                  >
+                    <span className="text-[10px] font-medium text-muted-foreground">
+                      {Math.round((buffer.end - buffer.start) * 60)}m buffer
+                    </span>
+                  </div>
+                ))}
+
                 {positioned
-                  .filter((p) => p.day === dayIndex)
+                  .filter((p) => p.day === day.weekday)
                   .map(({ entry, start, end }) => (
                     <div
                       key={entry.id}
-                      className="absolute left-1 right-1 overflow-hidden rounded-md border border-timer/30 bg-timer/10 px-2 py-1 text-left"
+                      draggable
+                      onDragStart={() => setDragId(entry.id)}
+                      onDragEnd={() => setDragId(null)}
+                      title="Drag to reschedule — buffer and lunch rules are enforced"
+                      className={cn(
+                        "absolute left-1 right-1 cursor-grab overflow-hidden rounded-md border border-timer/30 bg-timer/10 px-2 py-1 text-left active:cursor-grabbing",
+                        dragId === entry.id && "opacity-50 ring-2 ring-timer/40",
+                      )}
                       style={{
-                        top: (start - GRID_START) * ROW_HEIGHT,
+                        top: (start - gridStart) * ROW_HEIGHT,
                         height: Math.max((end - start) * ROW_HEIGHT - 2, 20),
                       }}
                     >
@@ -315,7 +418,15 @@ function TimerPage() {
             ))}
           </div>
         </div>
+        {!hydrated && null}
       </main>
+
+      <WorkSettingsDialog
+        open={settingsOpen}
+        onOpenChange={setSettingsOpen}
+        settings={settings}
+        onSave={applySettings}
+      />
     </div>
   );
 }

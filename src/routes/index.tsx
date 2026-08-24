@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Sparkles } from "lucide-react";
+import { Clock, Sparkles } from "lucide-react";
 import { toast } from "sonner";
 
 import { TimerCard, type TimerEntry } from "@/components/timer";
@@ -11,7 +11,9 @@ import { AiAddModal } from "@/components/ai-add-modal";
 import { GeneratedPlan } from "@/components/generated-plan";
 import { cn } from "@/lib/utils";
 import { buildPlanFromPrompt } from "@/lib/ai-parse";
-import { scheduleEntries } from "@/lib/schedule";
+import { rescheduleAll, scheduleEntries } from "@/lib/schedule";
+import { useWorkSettings } from "@/lib/work-settings";
+import { WorkSettingsDialog } from "@/components/work-settings-dialog";
 import {
   consumeReopenRequest,
   loadState,
@@ -49,6 +51,8 @@ function Dashboard() {
   const [timerEntry, setTimerEntry] = useState<TimerEntry | null>(null);
   const [activeTimer, setActiveTimer] = useState<string | null>(null);
   const [addOpen, setAddOpen] = useState(false);
+  const [settingsOpen, setSettingsOpen] = useState(false);
+  const { settings, update: updateSettings } = useWorkSettings();
   const approvedRef = useRef(false);
   const addModeRef = useRef(false);
 
@@ -118,6 +122,7 @@ function Dashboard() {
         ...entry,
         id: adding ? `${entry.id}-${suffix}` : entry.id,
       })),
+      settings,
     );
 
     setEntries((prev) => (adding ? [...prev, ...newEntries] : newEntries));
@@ -178,6 +183,14 @@ function Dashboard() {
           </div>
           <div className="flex items-center gap-4">
             <div className="text-sm text-muted-foreground">Today, Aug 24</div>
+            <button
+              type="button"
+              onClick={() => setSettingsOpen(true)}
+              className="inline-flex items-center gap-1.5 rounded-full border border-border px-3 py-1.5 text-xs font-medium text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
+            >
+              <Clock className="h-3.5 w-3.5" />
+              Working hours
+            </button>
             <div className="h-6 w-px bg-border" />
             <button
               type="button"
@@ -202,6 +215,7 @@ function Dashboard() {
               <GeneratedPlan
                 plan={plan}
                 calendarConnected={calendarConnected}
+                settings={settings}
                 onChange={setPlan}
                 onApprove={handleApprove}
                 onDismiss={rerun}
@@ -242,6 +256,19 @@ function Dashboard() {
         </div>
       </main>
       <AiAddModal open={addOpen} onOpenChange={setAddOpen} onSubmit={handleAiAdd} />
+      <WorkSettingsDialog
+        open={settingsOpen}
+        onOpenChange={setSettingsOpen}
+        settings={settings}
+        onSave={(next) => {
+          updateSettings(next);
+          setEntries((prev) => (prev.length ? rescheduleAll(prev, next) : prev));
+          toast.success("Working hours updated", {
+            description: "Existing and future tasks were rescheduled around lunch and your buffer.",
+            duration: 2500,
+          });
+        }}
+      />
     </div>
   );
 }
