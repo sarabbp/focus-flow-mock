@@ -165,8 +165,17 @@ export function GeneratedPlan({
       </div>
 
       <div className="mt-4">
-        <div className="flex items-center gap-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">
-          <CheckCircle2 className="h-3.5 w-3.5" /> Suggested tasks
+        <div className="flex flex-wrap items-center gap-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">
+          <span className="inline-flex items-center gap-2">
+            <CheckCircle2 className="h-3.5 w-3.5" /> Suggested tasks
+          </span>
+          <Badge
+            variant="secondary"
+            title="Each task becomes a card in your Tasks Kanban board"
+            className="bg-primary/10 font-normal normal-case tracking-normal text-primary"
+          >
+            Creates cards on Kanban Board
+          </Badge>
         </div>
         {editing ? (
           <ul className="mt-2 space-y-2">
