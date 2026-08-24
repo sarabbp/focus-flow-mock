@@ -50,7 +50,7 @@ const sections: { label: string; items: NavItem[] }[] = [
   {
     label: "Plan",
     items: [
-      { title: "Projects", icon: Folder },
+      { title: "Projects", icon: Folder, href: "/projects" },
       { title: "Tasks", icon: ListChecks, href: "/tasks" },
       { title: "Timeline", icon: GanttChartSquare, starred: true },
     ],
