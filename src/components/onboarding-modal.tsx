@@ -21,15 +21,25 @@ const steps = [
   { title: "Connect calendar or paste schedule", subtitle: "Focus turns your schedule into suggested time entries.", icon: CalendarCheck },
 ];
 
-export function OnboardingModal({ onComplete }: { onComplete: (answers: OnboardingAnswers) => void }) {
+export function OnboardingModal({
+  onComplete,
+  initial,
+  onCancel,
+}: {
+  onComplete: (answers: OnboardingAnswers) => void;
+  initial?: OnboardingAnswers | null;
+  onCancel?: () => void;
+}) {
   const [step, setStep] = useState(0);
-  const [answers, setAnswers] = useState<OnboardingAnswers>({
-    project: "",
-    client: "",
-    rate: "",
-    schedule: "",
-    calendarConnected: false,
-  });
+  const [answers, setAnswers] = useState<OnboardingAnswers>(
+    initial ?? {
+      project: "",
+      client: "",
+      rate: "",
+      schedule: "",
+      calendarConnected: false,
+    },
+  );
 
   const set = <K extends keyof OnboardingAnswers>(key: K, value: OnboardingAnswers[K]) =>
     setAnswers((a) => ({ ...a, [key]: value }));
