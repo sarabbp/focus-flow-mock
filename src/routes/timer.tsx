@@ -92,12 +92,18 @@ function TimerPage() {
       const start = parseTime(entry.start);
       const end = parseTime(entry.end);
       if (start === null || end === null || end <= start) return null;
-      return { entry, start, end, minutes: (end - start) * 60 };
+      return { entry, start, end, minutes: (end - start) * 60, day: entry.day ?? 0 };
     })
-    .filter((v): v is { entry: TimeEntry; start: number; end: number; minutes: number } => !!v);
+    .filter(
+      (v): v is { entry: TimeEntry; start: number; end: number; minutes: number; day: number } =>
+        !!v,
+    );
 
   const loggedMinutes = positioned.reduce((sum, p) => sum + p.minutes, 0);
   const loggedLabel = formatTotal(loggedMinutes);
+  const dayTotals = days.map((_, index) =>
+    positioned.filter((p) => p.day === index).reduce((sum, p) => sum + p.minutes, 0),
+  );
 
   return (
     <div className="flex h-screen w-full overflow-hidden bg-panel">
