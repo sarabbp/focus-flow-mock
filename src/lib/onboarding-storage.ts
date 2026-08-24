@@ -86,7 +86,7 @@ export function loadState(): PersistedState | null {
 export function saveState(state: PersistedState) {
   if (typeof window === "undefined") return;
   try {
-    window.localStorage.setItem(KEY, JSON.stringify(state));
+    store()?.setItem(KEY, JSON.stringify(state));
   } catch {
     /* ignore quota errors */
   }
@@ -95,7 +95,8 @@ export function saveState(state: PersistedState) {
 export function clearState() {
   if (typeof window === "undefined") return;
   try {
-    window.localStorage.removeItem(KEY);
+    store()?.removeItem(KEY);
+
   } catch {
     /* ignore */
   }
