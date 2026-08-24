@@ -26,10 +26,14 @@ export function AiSetupBar({
   const [value, setValue] = useState("");
 
   return (
-    <section className="relative overflow-hidden rounded-2xl border border-primary/30 bg-background p-6 shadow-sm ring-1 ring-primary/10">
+    <section className="relative overflow-hidden rounded-2xl border border-primary/30 bg-gradient-to-br from-primary/[0.07] via-background to-background p-6 shadow-lg shadow-primary/10 ring-1 ring-primary/20">
       <div className="flex items-center gap-2 text-xs font-medium uppercase tracking-wide text-primary">
         <Sparkles className="h-3.5 w-3.5" /> Focus AI setup
       </div>
+      <h2 className="mt-2 text-xl font-bold tracking-tight text-foreground">
+        ⚡ Quick Start: Build your workspace in 5 seconds
+      </h2>
+
 
       {loading ? (
         <div className="mt-4 flex items-center gap-3 rounded-xl border border-border bg-panel px-4 py-5">
