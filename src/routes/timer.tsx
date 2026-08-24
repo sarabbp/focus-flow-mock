@@ -222,7 +222,7 @@ function TimerPage() {
               <Plus className="h-4 w-4" />
             </button>
           </div>
-          {days.map((day) => (
+          {days.map((day, dayIndex) => (
             <div
               key={day.label}
               className="flex flex-1 items-baseline justify-center gap-2 border-l border-border py-2"
@@ -250,7 +250,7 @@ function TimerPage() {
                     day.active ? "font-semibold text-timer" : "text-muted-foreground",
                   )}
                 >
-                  {day.active ? loggedLabel : "–"}
+                  {formatTotal(dayTotals[dayIndex] ?? 0)}
                 </span>
               </div>
             </div>
