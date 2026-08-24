@@ -28,12 +28,32 @@ const KEY = `focus.onboarding.v2.${BUILD_ID}`;
 export const REOPEN_KEY = "focus.onboarding.reopen";
 export const REOPEN_EVENT = "focus:reopen-onboarding";
 
-/** Drop workspace state saved by previous builds. */
+/**
+ * Workspace state is session-scoped: every fresh visit (new tab or reload)
+ * starts blank with the Quick Start card visible, while state persists while
+ * you keep working in the same tab.
+ */
+function store(): Storage | null {
+  if (typeof window === "undefined") return null;
+  try {
+    return window.sessionStorage;
+  } catch {
+    return null;
+  }
+}
+
+/** Drop workspace state saved by previous builds or older localStorage versions. */
 function pruneOldBuilds() {
   if (typeof window === "undefined") return;
   try {
     for (const k of Object.keys(window.localStorage)) {
-      if (k.startsWith("focus.onboarding.v2") && k !== KEY) window.localStorage.removeItem(k);
+      if (k.startsWith("focus.onboarding.v2")) window.localStorage.removeItem(k);
+    }
+    const s = store();
+    if (s) {
+      for (const k of Object.keys(s)) {
+        if (k.startsWith("focus.onboarding.v2") && k !== KEY) s.removeItem(k);
+      }
     }
   } catch {
     /* ignore */
@@ -44,8 +64,9 @@ export function loadState(): PersistedState | null {
   if (typeof window === "undefined") return null;
   pruneOldBuilds();
   try {
-    const raw = window.localStorage.getItem(KEY);
+    const raw = store()?.getItem(KEY);
     if (!raw) return null;
+
     const parsed = JSON.parse(raw) as PersistedState;
     if (!parsed || typeof parsed !== "object") return null;
     return {
