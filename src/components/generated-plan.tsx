@@ -20,6 +20,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import type { TimeEntry } from "@/components/recent-entries";
 import type { DraftPlan } from "@/lib/onboarding-storage";
 import {
   DEFAULT_WORK_SETTINGS,
@@ -33,6 +34,8 @@ interface GeneratedPlanProps {
   plan: DraftPlan;
   calendarConnected: boolean;
   settings?: WorkSettings;
+  /** Already-scheduled entries the preview must schedule around. */
+  existingEntries?: TimeEntry[];
   onChange: (plan: DraftPlan) => void;
   onApprove: () => void;
   onDismiss: () => void;
@@ -42,6 +45,7 @@ export function GeneratedPlan({
   plan,
   calendarConnected,
   settings = DEFAULT_WORK_SETTINGS,
+  existingEntries = [],
   onChange,
   onApprove,
   onDismiss,
@@ -50,7 +54,7 @@ export function GeneratedPlan({
   const [newTag, setNewTag] = useState("");
   const [dragId, setDragId] = useState<string | null>(null);
   // Live preview of when each task will land, recomputed on every reorder.
-  const scheduled = scheduleEntries([], plan.entries, settings);
+  const scheduled = scheduleEntries(existingEntries, plan.entries, settings);
   const slotFor = (id: string) => scheduled.find((e) => e.id === id);
   const rateLabel = plan.rate.trim() ? `$${plan.rate.trim()}/h` : "Rate not set";
 
@@ -378,7 +382,7 @@ export function GeneratedPlan({
             size="lg"
             className="relative gap-2 px-6 text-base shadow-lg shadow-primary/20"
           >
-            <Play className="h-4 w-4 fill-current" /> Approve &amp; Start 25m Focus Timer
+            <Play className="h-4 w-4 fill-current" /> Approve and Start Timer
           </Button>
         </span>
         <button

@@ -67,7 +67,7 @@ function TasksPage() {
         plan.entries.map((entry, i) => ({
           id: `${entry.id}-${planIndex}`,
           title: entry.title,
-          status: (i === 0 ? "progress" : "todo") as StatusKey,
+          status: (planIndex === 0 && i === 0 ? "progress" : "todo") as StatusKey,
           duration: entry.duration,
           project: plan.project || "Project",
           client: plan.client || "Client",
