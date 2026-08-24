@@ -18,9 +18,25 @@ export interface PersistedState {
   approved: boolean;
 }
 
-const KEY = "focus.onboarding.v2";
+declare const __BUILD_ID__: string | undefined;
+
+/** Changes on every build/publish so a new deploy always starts blank. */
+const BUILD_ID = typeof __BUILD_ID__ === "string" ? __BUILD_ID__ : "dev";
+const KEY = `focus.onboarding.v2.${BUILD_ID}`;
 export const REOPEN_KEY = "focus.onboarding.reopen";
 export const REOPEN_EVENT = "focus:reopen-onboarding";
+
+/** Drop workspace state saved by previous builds. */
+function pruneOldBuilds() {
+  if (typeof window === "undefined") return;
+  try {
+    for (const k of Object.keys(window.localStorage)) {
+      if (k.startsWith("focus.onboarding.v2") && k !== KEY) window.localStorage.removeItem(k);
+    }
+  } catch {
+    /* ignore */
+  }
+}
 
 export function loadState(): PersistedState | null {
   if (typeof window === "undefined") return null;
