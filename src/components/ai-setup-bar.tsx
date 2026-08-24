@@ -106,7 +106,7 @@ export function AiSetupBar({ loading, onSubmit }: AiSetupBarProps) {
               </p>
             ) : (
               <p className="text-xs text-muted-foreground">
-                Include the <span className="text-foreground">task</span>, the{" "}
+                Include the <span className="text-foreground">job</span>, the{" "}
                 <span className="text-foreground">client</span>, and your{" "}
                 <span className="text-foreground">hourly rate</span> — we use them to create the
                 project, tasks, and billing.
