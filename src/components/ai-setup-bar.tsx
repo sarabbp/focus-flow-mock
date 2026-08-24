@@ -31,8 +31,9 @@ export function AiSetupBar({
         <Sparkles className="h-3.5 w-3.5" /> Focus AI setup
       </div>
       <h2 className="mt-2 text-xl font-bold tracking-tight text-foreground">
-        ⚡ Quick Start: Build your workspace in 5 seconds
+        ⚡ Quick Start: Build your workspace in 30 seconds
       </h2>
+
 
 
       {loading ? (
@@ -65,6 +66,12 @@ export function AiSetupBar({
               Generate <ArrowRight className="h-3.5 w-3.5" />
             </Button>
           </form>
+
+          <p className="mt-2 text-xs text-muted-foreground">
+            Included in your 21-day Premium Trial. Standard manual setup always available.
+          </p>
+
+
 
           <div className="mt-3 flex flex-wrap items-center gap-2">
             {QUICK_PILLS.map((pill) => (

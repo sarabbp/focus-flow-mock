@@ -63,9 +63,10 @@ export function WorkSettingsDialog({ open, onOpenChange, settings, onSave }: Pro
             <Clock className="h-4 w-4 text-primary" /> Working hours
           </DialogTitle>
           <DialogDescription>
-            New projects and tasks are scheduled inside these hours, with a buffer between tasks and
-            no work during lunch.
+            Smart scheduling respects your working hours, lunch break, and buffer gaps when
+            auto-allocating generated tasks.
           </DialogDescription>
+
         </DialogHeader>
 
         <div className="grid gap-5 py-2">
