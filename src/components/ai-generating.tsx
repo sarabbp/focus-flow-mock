@@ -1,21 +1,22 @@
 import { useEffect, useState } from "react";
 import { Check, Loader2, Sparkles } from "lucide-react";
 
+import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
-const tasks = [
-  "Reading your project details",
-  "Creating client card & billable rate",
-  "Parsing your schedule into time entries",
-  "Suggesting task tags",
-  "Preparing your dashboard",
+const stages = [
+  { label: "Reading your project details", detail: "Parsing answers from setup" },
+  { label: "Creating client card & billable rate", detail: "Setting default billing" },
+  { label: "Parsing your schedule into time entries", detail: "Mapping blocks to entries" },
+  { label: "Suggesting task tags", detail: "Grouping similar work" },
+  { label: "Preparing your dashboard", detail: "Almost there" },
 ];
 
-export function AiGenerating({ onDone }: { onDone: () => void }) {
+export function AiGenerating({ onDone, onCancel }: { onDone: () => void; onCancel: () => void }) {
   const [step, setStep] = useState(0);
 
   useEffect(() => {
-    if (step >= tasks.length) {
+    if (step >= stages.length) {
       const t = setTimeout(onDone, 500);
       return () => clearTimeout(t);
     }
@@ -23,7 +24,8 @@ export function AiGenerating({ onDone }: { onDone: () => void }) {
     return () => clearTimeout(t);
   }, [step, onDone]);
 
-  const progress = Math.min(100, Math.round((step / tasks.length) * 100));
+  const progress = Math.min(100, Math.round((step / stages.length) * 100));
+  const currentStage = stages[Math.min(step, stages.length - 1)]!;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-foreground/25 p-4 backdrop-blur-sm">
@@ -42,7 +44,13 @@ export function AiGenerating({ onDone }: { onDone: () => void }) {
           </p>
         </div>
 
-        <div className="mt-6 h-1.5 w-full overflow-hidden rounded-full bg-secondary">
+        <div className="mt-6 flex items-center justify-between text-xs font-medium text-muted-foreground">
+          <span>
+            Stage {Math.min(step + 1, stages.length)} of {stages.length} · {currentStage.detail}
+          </span>
+          <span className="text-foreground">{progress}%</span>
+        </div>
+        <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-secondary">
           <div
             className="h-full rounded-full bg-primary transition-all duration-500 ease-out"
             style={{ width: `${progress}%` }}
@@ -50,15 +58,15 @@ export function AiGenerating({ onDone }: { onDone: () => void }) {
         </div>
 
         <ul className="mt-6 space-y-3">
-          {tasks.map((task, i) => {
+          {stages.map((stage, i) => {
             const done = i < step;
             const active = i === step;
             return (
               <li
-                key={task}
+                key={stage.label}
                 className={cn(
                   "flex items-center gap-3 text-sm transition-colors",
-                  done ? "text-foreground" : active ? "text-foreground" : "text-muted-foreground/60",
+                  done || active ? "text-foreground" : "text-muted-foreground/60",
                 )}
               >
                 {done ? (
@@ -70,11 +78,17 @@ export function AiGenerating({ onDone }: { onDone: () => void }) {
                 ) : (
                   <span className="h-5 w-5 rounded-full border border-border" />
                 )}
-                {task}
+                {stage.label}
               </li>
             );
           })}
         </ul>
+
+        <div className="mt-7 flex justify-center">
+          <Button variant="ghost" size="sm" onClick={onCancel}>
+            Cancel and edit answers
+          </Button>
+        </div>
       </div>
     </div>
   );
