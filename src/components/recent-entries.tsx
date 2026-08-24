@@ -87,9 +87,12 @@ export function TodaysPlan({ entries, trackedMinutes }: TodaysPlanProps) {
 
   const nextUp = useMemo(() => {
     const currentDecimal = now.getHours() + now.getMinutes() / 60;
-    return [...entries]
-      .sort((a, b) => (parseClock(a.start) ?? 0) - (parseClock(b.start) ?? 0))
-      .find((e) => (parseClock(e.start) ?? 0) > currentDecimal);
+    const ordered = [...entries].sort(
+      (a, b) => (parseClock(a.start) ?? 0) - (parseClock(b.start) ?? 0),
+    );
+    // Prefer the next task that hasn't started yet; if the day is already
+    // past all tasks, show the first one so the dashboard always feels useful.
+    return ordered.find((e) => (parseClock(e.start) ?? 0) > currentDecimal) ?? ordered[0];
   }, [entries, now]);
 
   const billableTotal = useMemo(() => {
