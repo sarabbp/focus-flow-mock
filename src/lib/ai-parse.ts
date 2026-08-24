@@ -14,10 +14,20 @@ function titleCase(s: string) {
  *  "Translating Cyber Knight for Indie Gamers at $45/hr". */
 export function parsePrompt(prompt: string): { client: string; project: string; rate: string } {
   const text = prompt.trim();
-  const rate = text.match(/\$\s?(\d+(?:\.\d+)?)/)?.[1] ?? "";
 
-  let work = text.replace(/\bat\b[^,]*\$\s?\d+(?:\.\d+)?\s*(?:\/\s*(?:hr|hour|h))?/i, "").trim();
-  work = work.replace(/[.,;]+$/, "").trim();
+  // Rate can be written as "$60/hr", "60$/h", "60 USD per hour", "(85/hour)"...
+  const rateRe =
+    /(?:\bat\b|@|,)?\s*[($]*\s*(?:\$|usd|eur|€|£)?\s*(\d+(?:[.,]\d+)?)\s*(?:\$|usd|eur|€|£)?\s*(?:\/|\bper\b)?\s*(?:hr|hour|h)\b\)?/i;
+  const match = text.match(rateRe);
+  const rate = match?.[1]?.replace(",", ".") ?? "";
+
+  // Remove the whole rate expression (including any "at"/"@"/parens) from the text
+  // so the client name never carries the rate string.
+  let work = (match ? text.replace(match[0], " ") : text).replace(/\s{2,}/g, " ").trim();
+  work = work
+    .replace(/\b(at|@|for)\s*$/i, "")
+    .replace(/[.,;·\-–(]+$/, "")
+    .trim();
 
   let client = "";
   let project = work;
@@ -28,6 +38,12 @@ export function parsePrompt(prompt: string): { client: string; project: string; 
   }
 
   project = project.replace(/^(i'?m\s+)?(working on|doing)\s+/i, "").trim();
+
+  // "Indie Gamers at $60/hr" — a bare name with a rate is a client, not a project.
+  if (!client && rate && !/\b\w+ing\b/i.test(project) && project.split(/\s+/).length <= 3) {
+    client = project;
+    project = "";
+  }
 
   return {
     client: client ? titleCase(client) : "Client",
