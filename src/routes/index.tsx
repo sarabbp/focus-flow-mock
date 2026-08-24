@@ -138,16 +138,17 @@ function Dashboard() {
     setEntries((prev) => (adding ? [...prev, ...newEntries] : newEntries));
     setPlans((prev) => (adding ? [...prev, plan] : [plan]));
 
+    const firstTask = newEntries[0] ?? plan.entries[0];
     const next: TimerEntry = {
       id: adding ? `timer-${suffix}` : "approved-timer",
-      title: `Working on ${plan.project || "your project"}`,
+      title: firstTask?.title ?? `Working on ${plan.project || "your project"}`,
       project: plan.project || "Main project",
       client: plan.client || "Client",
       tags: plan.tags.slice(0, 1),
       billable: true,
     };
     setTimerEntry(next);
-    setActiveTimer(next.id);
+    setActiveTimer(null);
     approvedRef.current = true;
     addModeRef.current = false;
     setAddMode(false);
