@@ -46,6 +46,7 @@
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-active: var(--sidebar-active);
   --color-sidebar-active-foreground: var(--sidebar-active-foreground);
+  --color-sidebar-hover: var(--sidebar-hover);
 
   --color-panel: var(--panel);
   --color-panel-foreground: var(--panel-foreground);
@@ -97,8 +98,9 @@
   --sidebar-foreground: oklch(0.35 0.015 264);
   --sidebar-muted: oklch(0.6 0.01 264);
   --sidebar-border: oklch(0.88 0.01 264);
-  --sidebar-active: oklch(0.93 0.005 264);
-  --sidebar-active-foreground: oklch(0.2 0.01 270);
+  --sidebar-active: oklch(0.93 0.03 12);
+  --sidebar-active-foreground: oklch(0.5 0.19 12);
+  --sidebar-hover: oklch(0.93 0.005 264);
 
   /* Custom app surfaces */
   --panel: oklch(0.98 0.002 264);
