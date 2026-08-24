@@ -2,6 +2,7 @@ import { Clock, MoreHorizontal, Tag, DollarSign, Inbox } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
+import { projectColor } from "@/lib/project-colors";
 
 export interface TimeEntry {
   id: string;
@@ -60,7 +61,7 @@ export function RecentEntries({
               className="group flex items-center justify-between gap-4 px-6 py-3.5 transition-colors hover:bg-panel"
             >
               <div className="flex flex-1 items-center gap-4">
-                <div className={cn("h-2.5 w-2.5 rounded-full", entry.color.split(" ")[0])} />
+                <div className={cn("h-2.5 w-2.5 rounded-full", projectColor(entry.project).dot)} />
                 <div className="flex flex-col gap-0.5">
                   <span className="text-sm font-medium text-foreground">{entry.title}</span>
                   <div className="flex items-center gap-2 text-xs text-muted-foreground">
