@@ -47,16 +47,14 @@ export function OnboardingModal({
   onCancel?: (() => void) | undefined;
 }) {
   const [step, setStep] = useState(0);
-  const [answers, setAnswers] = useState<OnboardingAnswers>(
-    initial ?? {
-      role: "",
-      project: "",
-      client: "",
-      rate: "",
-      schedule: "",
-      calendarConnected: false,
-    },
-  );
+  const [answers, setAnswers] = useState<OnboardingAnswers>({
+    role: initial?.role ?? "",
+    project: initial?.project ?? "",
+    client: initial?.client ?? "",
+    rate: initial?.rate ?? "",
+    schedule: initial?.schedule ?? "",
+    calendarConnected: initial?.calendarConnected ?? false,
+  });
 
   const set = <K extends keyof OnboardingAnswers>(key: K, value: OnboardingAnswers[K]) =>
     setAnswers((a) => ({ ...a, [key]: value }));
