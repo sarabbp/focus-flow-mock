@@ -60,19 +60,21 @@ function TasksPage() {
   const [tasks, setTasks] = useState<TaskCard[]>([]);
 
   useEffect(() => {
-    const plan = loadState()?.plan ?? null;
-    if (!plan) return;
+    const plans = loadState()?.plans ?? [];
+    if (plans.length === 0) return;
     setTasks(
-      plan.entries.map((entry, i) => ({
-        id: entry.id,
-        title: entry.title,
-        status: i === 0 ? "progress" : "todo",
-        duration: entry.duration,
-        project: plan.project || "Project",
-        client: plan.client || "Client",
-        billable: entry.billable,
-        today: true,
-      })),
+      plans.flatMap((plan, planIndex) =>
+        plan.entries.map((entry, i) => ({
+          id: `${entry.id}-${planIndex}`,
+          title: entry.title,
+          status: (i === 0 ? "progress" : "todo") as StatusKey,
+          duration: entry.duration,
+          project: plan.project || "Project",
+          client: plan.client || "Client",
+          billable: entry.billable,
+          today: true,
+        })),
+      ),
     );
   }, []);
 
