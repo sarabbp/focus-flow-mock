@@ -4,7 +4,7 @@ import { Clock, Sparkles } from "lucide-react";
 import { toast } from "sonner";
 
 import { TimerCard, type TimerEntry } from "@/components/timer";
-import { RecentEntries, type TimeEntry } from "@/components/recent-entries";
+import { TodaysPlan, type TimeEntry } from "@/components/recent-entries";
 import { Sidebar } from "@/components/sidebar";
 import { AiSetupBar } from "@/components/ai-setup-bar";
 import { AiAddModal } from "@/components/ai-add-modal";
@@ -253,11 +253,7 @@ function Dashboard() {
                 onTimerToggle={setActiveTimer}
               />
             </div>
-            <RecentEntries
-              entries={entries}
-              trackedLabel={entries.length === 0 ? "0m tracked" : "3h 5m tracked"}
-              plannedLabel={entries.length === 0 ? "Nothing planned" : "4h 45m planned"}
-            />
+            <TodaysPlan entries={entries} trackedMinutes={Math.floor(trackedSeconds / 60)} />
           </div>
         </div>
       </main>
