@@ -4,7 +4,7 @@ import { Clock, Sparkles } from "lucide-react";
 import { toast } from "sonner";
 
 import { TimerCard, type TimerEntry } from "@/components/timer";
-import { RecentEntries, type TimeEntry } from "@/components/recent-entries";
+import { TodaysPlan, type TimeEntry } from "@/components/recent-entries";
 import { Sidebar } from "@/components/sidebar";
 import { AiSetupBar } from "@/components/ai-setup-bar";
 import { AiAddModal } from "@/components/ai-add-modal";
@@ -48,6 +48,7 @@ function Dashboard() {
   const [plans, setPlans] = useState<DraftPlan[]>([]);
   const [showSetup, setShowSetup] = useState(true);
   const [entries, setEntries] = useState<TimeEntry[]>([]);
+  const [trackedSeconds, setTrackedSeconds] = useState(0);
   const [timerEntry, setTimerEntry] = useState<TimerEntry | null>(null);
   const [activeTimer, setActiveTimer] = useState<string | null>(null);
   const [addOpen, setAddOpen] = useState(false);
@@ -89,6 +90,13 @@ function Dashboard() {
       approved: approvedRef.current,
     });
   }, [hydrated, prompt, calendarConnected, plan, plans, entries, timerEntry]);
+
+  // Accumulate real tracked seconds whenever the timer is running.
+  useEffect(() => {
+    if (!activeTimer) return;
+    const id = setInterval(() => setTrackedSeconds((s) => s + 1), 1000);
+    return () => clearInterval(id);
+  }, [activeTimer]);
 
   const rerun = useCallback(() => {
     setPlan(null);
@@ -253,11 +261,7 @@ function Dashboard() {
                 onTimerToggle={setActiveTimer}
               />
             </div>
-            <RecentEntries
-              entries={entries}
-              trackedLabel={entries.length === 0 ? "0m tracked" : "3h 5m tracked"}
-              plannedLabel={entries.length === 0 ? "Nothing planned" : "4h 45m planned"}
-            />
+            <TodaysPlan entries={entries} trackedMinutes={Math.floor(trackedSeconds / 60)} />
           </div>
         </div>
       </main>
