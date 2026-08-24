@@ -71,7 +71,7 @@ export function buildPlanFromPrompt(prompt: string): DraftPlan {
         end: "9:30 AM",
         tags: ["Client call"],
         billable: true,
-        hourlyRate,
+        ...(hourlyRate ? { hourlyRate } : {}),
         color: "bg-timer/10 text-timer",
       },
       {
@@ -84,7 +84,7 @@ export function buildPlanFromPrompt(prompt: string): DraftPlan {
         end: "11:30 AM",
         tags: ["Deep work"],
         billable: true,
-        hourlyRate,
+        ...(hourlyRate ? { hourlyRate } : {}),
         color: "bg-timer/10 text-timer",
       },
       {
@@ -97,7 +97,7 @@ export function buildPlanFromPrompt(prompt: string): DraftPlan {
         end: "1:45 PM",
         tags: ["Revisions"],
         billable: true,
-        hourlyRate,
+        ...(hourlyRate ? { hourlyRate } : {}),
         color: "bg-timer/10 text-timer",
       },
       {
