@@ -14,6 +14,8 @@ export interface TimeEntry {
   tags: string[];
   billable: boolean;
   color: string;
+  /** Working day index this entry is scheduled on (0 = Monday). */
+  day?: number;
 }
 
 interface RecentEntriesProps {

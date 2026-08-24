@@ -92,12 +92,18 @@ function TimerPage() {
       const start = parseTime(entry.start);
       const end = parseTime(entry.end);
       if (start === null || end === null || end <= start) return null;
-      return { entry, start, end, minutes: (end - start) * 60 };
+      return { entry, start, end, minutes: (end - start) * 60, day: entry.day ?? 0 };
     })
-    .filter((v): v is { entry: TimeEntry; start: number; end: number; minutes: number } => !!v);
+    .filter(
+      (v): v is { entry: TimeEntry; start: number; end: number; minutes: number; day: number } =>
+        !!v,
+    );
 
   const loggedMinutes = positioned.reduce((sum, p) => sum + p.minutes, 0);
   const loggedLabel = formatTotal(loggedMinutes);
+  const dayTotals = days.map((_, index) =>
+    positioned.filter((p) => p.day === index).reduce((sum, p) => sum + p.minutes, 0),
+  );
 
   return (
     <div className="flex h-screen w-full overflow-hidden bg-panel">
@@ -216,7 +222,7 @@ function TimerPage() {
               <Plus className="h-4 w-4" />
             </button>
           </div>
-          {days.map((day) => (
+          {days.map((day, dayIndex) => (
             <div
               key={day.label}
               className="flex flex-1 items-baseline justify-center gap-2 border-l border-border py-2"
@@ -244,7 +250,7 @@ function TimerPage() {
                     day.active ? "font-semibold text-timer" : "text-muted-foreground",
                   )}
                 >
-                  {day.active ? loggedLabel : "–"}
+                  {formatTotal(dayTotals[dayIndex] ?? 0)}
                 </span>
               </div>
             </div>
@@ -264,7 +270,7 @@ function TimerPage() {
                 </div>
               ))}
             </div>
-            {days.map((day) => (
+            {days.map((day, dayIndex) => (
               <div key={day.label} className="relative flex-1 border-l border-border">
                 {hours.map((h) => (
                   <div
@@ -275,8 +281,9 @@ function TimerPage() {
                     )}
                   />
                 ))}
-                {day.active &&
-                  positioned.map(({ entry, start, end }) => (
+                {positioned
+                  .filter((p) => p.day === dayIndex)
+                  .map(({ entry, start, end }) => (
                     <div
                       key={entry.id}
                       className="absolute left-1 right-1 overflow-hidden rounded-md border border-timer/30 bg-timer/10 px-2 py-1 text-left"

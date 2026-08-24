@@ -11,6 +11,7 @@ import { AiAddModal } from "@/components/ai-add-modal";
 import { GeneratedPlan } from "@/components/generated-plan";
 import { cn } from "@/lib/utils";
 import { buildPlanFromPrompt } from "@/lib/ai-parse";
+import { scheduleEntries } from "@/lib/schedule";
 import {
   consumeReopenRequest,
   loadState,
@@ -111,10 +112,13 @@ function Dashboard() {
     if (!plan) return;
     const adding = addModeRef.current;
     const suffix = `p${plans.length + 1}`;
-    const newEntries = plan.entries.map((entry) => ({
-      ...entry,
-      id: adding ? `${entry.id}-${suffix}` : entry.id,
-    }));
+    const newEntries = scheduleEntries(
+      adding ? entries : [],
+      plan.entries.map((entry) => ({
+        ...entry,
+        id: adding ? `${entry.id}-${suffix}` : entry.id,
+      })),
+    );
 
     setEntries((prev) => (adding ? [...prev, ...newEntries] : newEntries));
     setPlans((prev) => (adding ? [...prev, plan] : [plan]));
