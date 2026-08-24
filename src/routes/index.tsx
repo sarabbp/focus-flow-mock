@@ -236,7 +236,8 @@ function Dashboard() {
                   >
                     <Sparkles className="h-3.5 w-3.5" /> AI Add Project
                     <span className="rounded-full bg-primary/15 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-primary">
-                      Pro
+                      Premium
+
                     </span>
                     <kbd className="rounded border border-primary/30 px-1 font-sans text-[10px] text-primary/80">
                       ⌘K
