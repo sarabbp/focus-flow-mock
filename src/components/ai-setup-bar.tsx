@@ -1,0 +1,95 @@
+import { useState } from "react";
+import { ArrowRight, CalendarCheck, Loader2, Sparkles } from "lucide-react";
+
+import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
+
+export const QUICK_PILLS = [
+  { label: "Freelance Designer ($85/hr)", prompt: "Freelance design work for Northwind Studio at $85/hr" },
+  { label: "DevOps Consultant ($120/hr)", prompt: "DevOps consulting for Acme Cloud at $120/hr" },
+  { label: "Game Translator ($45/hr)", prompt: "Translating Cyber Knight for Indie Gamers at $45/hr" },
+];
+
+interface AiSetupBarProps {
+  loading: boolean;
+  calendarConnected: boolean;
+  onSubmit: (prompt: string) => void;
+  onConnectCalendar: () => void;
+}
+
+export function AiSetupBar({
+  loading,
+  calendarConnected,
+  onSubmit,
+  onConnectCalendar,
+}: AiSetupBarProps) {
+  const [value, setValue] = useState("");
+
+  return (
+    <section className="relative overflow-hidden rounded-2xl border border-primary/30 bg-background p-6 shadow-sm ring-1 ring-primary/10">
+      <div className="flex items-center gap-2 text-xs font-medium uppercase tracking-wide text-primary">
+        <Sparkles className="h-3.5 w-3.5" /> Focus AI setup
+      </div>
+
+      {loading ? (
+        <div className="mt-4 flex items-center gap-3 rounded-xl border border-border bg-panel px-4 py-5">
+          <Loader2 className="h-5 w-5 animate-spin text-primary" />
+          <div>
+            <p className="text-sm font-medium text-foreground">
+              AI is parsing client, rate, and generating task cards...
+            </p>
+            <p className="text-xs text-muted-foreground">This takes just a moment.</p>
+          </div>
+        </div>
+      ) : (
+        <>
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              if (value.trim()) onSubmit(value.trim());
+            }}
+            className="mt-4 flex items-center gap-2 rounded-xl border border-border bg-panel px-4 py-2 focus-within:border-primary/50 focus-within:ring-2 focus-within:ring-primary/15"
+          >
+            <input
+              value={value}
+              onChange={(e) => setValue(e.target.value)}
+              aria-label="Tell us what you're working on today"
+              placeholder="Tell us what you're working on today (e.g., 'Translating Cyber Knight for Indie Gamers at $45/hr')."
+              className="h-10 flex-1 bg-transparent text-sm text-foreground outline-none placeholder:text-muted-foreground"
+            />
+            <Button type="submit" size="sm" disabled={!value.trim()} className="gap-1.5">
+              Generate <ArrowRight className="h-3.5 w-3.5" />
+            </Button>
+          </form>
+
+          <div className="mt-3 flex flex-wrap items-center gap-2">
+            {QUICK_PILLS.map((pill) => (
+              <button
+                key={pill.label}
+                type="button"
+                onClick={() => onSubmit(pill.prompt)}
+                className="rounded-full border border-border bg-background px-3 py-1.5 text-xs font-medium text-foreground transition-colors hover:border-primary/40 hover:bg-secondary"
+              >
+                {pill.label}
+              </button>
+            ))}
+          </div>
+
+          <button
+            type="button"
+            onClick={onConnectCalendar}
+            className={cn(
+              "mt-4 inline-flex items-center gap-1.5 text-xs text-muted-foreground transition-colors hover:text-foreground",
+              calendarConnected && "text-primary hover:text-primary",
+            )}
+          >
+            <CalendarCheck className="h-3.5 w-3.5" />
+            {calendarConnected
+              ? "Google Calendar connected — daily schedule will auto-sync"
+              : "or/and Connect Google Calendar to auto-sync daily schedule"}
+          </button>
+        </>
+      )}
+    </section>
+  );
+}

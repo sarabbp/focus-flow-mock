@@ -4,9 +4,9 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { TimerCard, type TimerEntry } from "@/components/timer";
 import { RecentEntries, type TimeEntry } from "@/components/recent-entries";
 import { Sidebar } from "@/components/sidebar";
-import { OnboardingModal, type OnboardingAnswers } from "@/components/onboarding-modal";
-import { AiGenerating } from "@/components/ai-generating";
+import { AiSetupBar } from "@/components/ai-setup-bar";
 import { GeneratedPlan } from "@/components/generated-plan";
+import { buildPlanFromPrompt } from "@/lib/ai-parse";
 import {
   consumeReopenRequest,
   loadState,
@@ -21,7 +21,10 @@ export const Route = createFileRoute("/")({
       { title: "Dashboard — Focus" },
       { name: "description", content: "Track your time and focus with a clean, modern dashboard." },
       { property: "og:title", content: "Dashboard — Focus" },
-      { property: "og:description", content: "Track your time and focus with a clean, modern dashboard." },
+      {
+        property: "og:description",
+        content: "Track your time and focus with a clean, modern dashboard.",
+      },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
     ],
@@ -29,109 +32,69 @@ export const Route = createFileRoute("/")({
   component: Dashboard,
 });
 
-type Phase = "onboarding" | "generating" | "ready";
-
-const SUGGESTED_TAGS = ["Deep work", "Client call", "Revisions", "Admin"];
-
-function buildPlan(answers: OnboardingAnswers): DraftPlan {
-  const client = answers.client.trim() || "Client";
-  const project = answers.project.trim() || "Main project";
-  return {
-    client,
-    rate: answers.rate.trim(),
-    project,
-    tags: SUGGESTED_TAGS,
-    entries: [
-      {
-        id: "gen-1",
-        title: "Kickoff call",
-        project,
-        client,
-        duration: "30m",
-        start: "9:00 AM",
-        end: "9:30 AM",
-        tags: ["Client call"],
-        billable: true,
-        color: "bg-timer/10 text-timer",
-      },
-      {
-        id: "gen-2",
-        title: "Discovery & notes",
-        project,
-        client,
-        duration: "1h 15m",
-        start: "10:30 AM",
-        end: "11:45 AM",
-        tags: ["Deep work"],
-        billable: true,
-        color: "bg-timer/10 text-timer",
-      },
-      {
-        id: "gen-3",
-        title: "Weekly admin",
-        project: "Admin",
-        client: "—",
-        duration: "20m",
-        start: "2:00 PM",
-        end: "2:20 PM",
-        tags: ["Admin"],
-        billable: false,
-        color: "bg-muted text-muted-foreground",
-      },
-    ],
-  };
-}
-
 function Dashboard() {
   const [hydrated, setHydrated] = useState(false);
-  const [phase, setPhase] = useState<Phase>("onboarding");
-  const [answers, setAnswers] = useState<OnboardingAnswers | null>(null);
+  const [prompt, setPrompt] = useState<string | null>(null);
+  const [calendarConnected, setCalendarConnected] = useState(false);
+  const [loading, setLoading] = useState(false);
   const [plan, setPlan] = useState<DraftPlan | null>(null);
-  const [showPlan, setShowPlan] = useState(false);
+  const [showSetup, setShowSetup] = useState(true);
   const [entries, setEntries] = useState<TimeEntry[]>([]);
   const [timerEntry, setTimerEntry] = useState<TimerEntry | null>(null);
   const [activeTimer, setActiveTimer] = useState<string | null>(null);
   const approvedRef = useRef(false);
 
-  // Load persisted onboarding state on first client render.
+  // Load persisted setup state on first client render.
   useEffect(() => {
     const saved = loadState();
-    if (saved && (saved.answers || saved.entries.length > 0)) {
-      setAnswers(saved.answers);
+    if (saved && (saved.prompt || saved.entries.length > 0)) {
+      setPrompt(saved.prompt);
+      setCalendarConnected(saved.calendarConnected);
       setPlan(saved.plan);
       setEntries(saved.entries);
       setTimerEntry(saved.timerEntry);
       approvedRef.current = saved.approved;
-      setShowPlan(!saved.approved && !!saved.plan);
-      setPhase("ready");
+      setShowSetup(!saved.approved);
     }
-    if (consumeReopenRequest()) setPhase("onboarding");
+    if (consumeReopenRequest()) {
+      setPlan(null);
+      setShowSetup(true);
+    }
     setHydrated(true);
   }, []);
 
-  // Persist whenever meaningful state changes.
   useEffect(() => {
     if (!hydrated) return;
-    saveState({ answers, plan, entries, timerEntry, approved: approvedRef.current });
-  }, [hydrated, answers, plan, entries, timerEntry]);
+    saveState({
+      prompt,
+      calendarConnected,
+      plan,
+      entries,
+      timerEntry,
+      approved: approvedRef.current,
+    });
+  }, [hydrated, prompt, calendarConnected, plan, entries, timerEntry]);
 
-  const reopen = useCallback(() => setPhase("onboarding"), []);
+  const rerun = useCallback(() => {
+    setPlan(null);
+    setLoading(false);
+    approvedRef.current = false;
+    setShowSetup(true);
+  }, []);
 
   useEffect(() => {
-    window.addEventListener(REOPEN_EVENT, reopen);
-    return () => window.removeEventListener(REOPEN_EVENT, reopen);
-  }, [reopen]);
+    window.addEventListener(REOPEN_EVENT, rerun);
+    return () => window.removeEventListener(REOPEN_EVENT, rerun);
+  }, [rerun]);
 
-  const handleComplete = (a: OnboardingAnswers) => {
-    setAnswers(a);
-    setPhase("generating");
-  };
-
-  const handleGenerated = () => {
-    if (answers) setPlan(buildPlan(answers));
-    approvedRef.current = false;
-    setPhase("ready");
-    setShowPlan(true);
+  const handleSubmit = (value: string) => {
+    setPrompt(value);
+    setPlan(null);
+    setLoading(true);
+    window.setTimeout(() => {
+      setPlan(buildPlanFromPrompt(value));
+      setLoading(false);
+    }, 2000);
   };
 
   const handleApprove = () => {
@@ -148,7 +111,7 @@ function Dashboard() {
     setTimerEntry(next);
     setActiveTimer(next.id);
     approvedRef.current = true;
-    setShowPlan(false);
+    setShowSetup(false);
   };
 
   return (
@@ -173,35 +136,32 @@ function Dashboard() {
 
         <div className="flex-1 overflow-y-auto p-6">
           <div className="mx-auto max-w-4xl space-y-6">
-            <TimerCard entry={timerEntry} activeTimer={activeTimer} onTimerToggle={setActiveTimer} />
-            {showPlan && plan && (
-              <GeneratedPlan
-                plan={plan}
-                calendarConnected={!!answers?.calendarConnected}
-                onChange={setPlan}
-                onApprove={handleApprove}
-                onDismiss={() => setShowPlan(false)}
+            {showSetup && !plan && (
+              <AiSetupBar
+                loading={loading}
+                calendarConnected={calendarConnected}
+                onSubmit={handleSubmit}
+                onConnectCalendar={() => setCalendarConnected((v) => !v)}
               />
             )}
+            {showSetup && plan && (
+              <GeneratedPlan
+                plan={plan}
+                calendarConnected={calendarConnected}
+                onChange={setPlan}
+                onApprove={handleApprove}
+                onDismiss={rerun}
+              />
+            )}
+            <TimerCard entry={timerEntry} activeTimer={activeTimer} onTimerToggle={setActiveTimer} />
             <RecentEntries
               entries={entries}
-              trackedLabel={entries.length === 0 ? "0m tracked" : "2h 5m tracked"}
+              trackedLabel={entries.length === 0 ? "0m tracked" : "3h 5m tracked"}
               plannedLabel={entries.length === 0 ? "Nothing planned" : "4h 45m planned"}
             />
           </div>
         </div>
       </main>
-
-      {phase === "onboarding" && (
-        <OnboardingModal
-          initial={answers}
-          onComplete={handleComplete}
-          onCancel={entries.length > 0 || plan ? () => setPhase("ready") : undefined}
-        />
-      )}
-      {phase === "generating" && (
-        <AiGenerating onDone={handleGenerated} onCancel={() => setPhase("onboarding")} />
-      )}
     </div>
   );
 }

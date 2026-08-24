@@ -1,4 +1,3 @@
-import type { OnboardingAnswers } from "@/components/onboarding-modal";
 import type { TimeEntry } from "@/components/recent-entries";
 import type { TimerEntry } from "@/components/timer";
 
@@ -11,14 +10,15 @@ export interface DraftPlan {
 }
 
 export interface PersistedState {
-  answers: OnboardingAnswers | null;
+  prompt: string | null;
+  calendarConnected: boolean;
   plan: DraftPlan | null;
   entries: TimeEntry[];
   timerEntry: TimerEntry | null;
   approved: boolean;
 }
 
-const KEY = "focus.onboarding.v1";
+const KEY = "focus.onboarding.v2";
 export const REOPEN_KEY = "focus.onboarding.reopen";
 export const REOPEN_EVENT = "focus:reopen-onboarding";
 
@@ -30,7 +30,8 @@ export function loadState(): PersistedState | null {
     const parsed = JSON.parse(raw) as PersistedState;
     if (!parsed || typeof parsed !== "object") return null;
     return {
-      answers: parsed.answers ?? null,
+      prompt: parsed.prompt ?? null,
+      calendarConnected: !!parsed.calendarConnected,
       plan: parsed.plan ?? null,
       entries: Array.isArray(parsed.entries) ? parsed.entries : [],
       timerEntry: parsed.timerEntry ?? null,
