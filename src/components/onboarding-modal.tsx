@@ -41,7 +41,8 @@ export function OnboardingModal({ onComplete }: { onComplete: (answers: Onboardi
         ? answers.client.trim().length > 0
         : answers.calendarConnected || answers.schedule.trim().length > 0;
 
-  const Icon = steps[step].icon;
+  const current = steps[step]!;
+  const Icon = current.icon;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-foreground/25 p-4 backdrop-blur-sm">
@@ -67,8 +68,8 @@ export function OnboardingModal({ onComplete }: { onComplete: (answers: Onboardi
               <Icon className="h-4.5 w-4.5" />
             </div>
             <div>
-              <h2 className="text-lg font-semibold tracking-tight text-foreground">{steps[step].title}</h2>
-              <p className="mt-0.5 text-sm text-muted-foreground">{steps[step].subtitle}</p>
+              <h2 className="text-lg font-semibold tracking-tight text-foreground">{current.title}</h2>
+              <p className="mt-0.5 text-sm text-muted-foreground">{current.subtitle}</p>
             </div>
           </div>
 
