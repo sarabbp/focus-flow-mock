@@ -98,16 +98,6 @@ export function GeneratedPlan({
           </div>
         </div>
         <div className="flex items-center gap-1">
-          <Button
-            type="button"
-            variant="ghost"
-            size="sm"
-            onClick={() => setEditing((v) => !v)}
-            className="gap-1.5"
-          >
-            {editing ? <Check className="h-3.5 w-3.5" /> : <Pencil className="h-3.5 w-3.5" />}
-            {editing ? "Done editing" : "Edit"}
-          </Button>
           <button
             type="button"
             onClick={onDismiss}
