@@ -216,16 +216,22 @@ export function GeneratedPlan({
             </li>
           </ul>
         ) : (
-          <ul className="mt-2 space-y-1.5">
+          <div className="mt-2 flex flex-wrap gap-2">
             {plan.entries.map((entry) => (
-              <li key={entry.id} className="flex items-center gap-2 text-sm text-foreground">
+              <button
+                key={entry.id}
+                type="button"
+                onClick={() => updateEntry(entry.id, { billable: !entry.billable })}
+                className="group inline-flex items-center gap-2 rounded-full border border-border bg-panel px-3 py-1.5 text-sm text-foreground transition-colors hover:border-primary/40 hover:bg-secondary"
+              >
                 <span className="h-1.5 w-1.5 rounded-full bg-timer" />
                 {entry.title}
-                <span className="text-muted-foreground">· {entry.duration}</span>
-              </li>
+                <span className="text-xs text-muted-foreground">{entry.duration}</span>
+              </button>
             ))}
-          </ul>
+          </div>
         )}
+
       </div>
 
       <div className="mt-4">
