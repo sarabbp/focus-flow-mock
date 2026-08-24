@@ -372,16 +372,19 @@ export function GeneratedPlan({
             size="lg"
             className="relative gap-2 px-6 text-base shadow-lg shadow-primary/20"
           >
-            <Play className="h-4 w-4 fill-current" /> Approve and Start Timer
+            <Check className="h-4 w-4" /> Approve
           </Button>
         </span>
-        <button
+        <Button
           type="button"
-          onClick={onDismiss}
-          className="text-sm text-muted-foreground transition-colors hover:text-foreground"
+          variant="ghost"
+          size="sm"
+          onClick={() => setEditing((v) => !v)}
+          className="gap-1.5"
         >
-          Start over
-        </button>
+          {editing ? <Check className="h-3.5 w-3.5" /> : <Pencil className="h-3.5 w-3.5" />}
+          {editing ? "Done editing" : "Edit"}
+        </Button>
         <p className="w-full text-xs text-muted-foreground">
           Scheduled {formatClock(settings.startHour)}–{formatClock(settings.endHour)} with a{" "}
           {settings.gapMinutes}m buffer between tasks
