@@ -27,8 +27,8 @@ export function OnboardingModal({
   onCancel,
 }: {
   onComplete: (answers: OnboardingAnswers) => void;
-  initial?: OnboardingAnswers | null;
-  onCancel?: () => void;
+  initial?: OnboardingAnswers | null | undefined;
+  onCancel?: (() => void) | undefined;
 }) {
   const [step, setStep] = useState(0);
   const [answers, setAnswers] = useState<OnboardingAnswers>(

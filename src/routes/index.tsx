@@ -8,7 +8,6 @@ import { OnboardingModal, type OnboardingAnswers } from "@/components/onboarding
 import { AiGenerating } from "@/components/ai-generating";
 import { GeneratedPlan } from "@/components/generated-plan";
 import {
-  clearState,
   consumeReopenRequest,
   loadState,
   saveState,
@@ -152,18 +151,6 @@ function Dashboard() {
     setShowPlan(false);
   };
 
-  const handleReset = () => {
-    clearState();
-    setAnswers(null);
-    setPlan(null);
-    setEntries([]);
-    setTimerEntry(null);
-    setActiveTimer(null);
-    approvedRef.current = false;
-    setShowPlan(false);
-    setPhase("onboarding");
-  };
-
   return (
     <div className="flex h-screen w-full overflow-hidden bg-panel">
       <Sidebar />
@@ -215,8 +202,6 @@ function Dashboard() {
       {phase === "generating" && (
         <AiGenerating onDone={handleGenerated} onCancel={() => setPhase("onboarding")} />
       )}
-      {/* Reset hook for the sidebar "start over" action */}
-      <span hidden data-reset onClick={handleReset} />
     </div>
   );
 }
