@@ -60,14 +60,15 @@ export function Sidebar() {
       </nav>
 
       <div className="border-t border-sidebar-border p-3">
-        <Link
-          to="/settings"
-          className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-sidebar-foreground transition-colors hover:bg-sidebar-active hover:text-sidebar-active-foreground"
+        <button
+          type="button"
+          className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-sidebar-foreground transition-colors hover:bg-sidebar-active hover:text-sidebar-active-foreground"
         >
           <Settings className="h-4.5 w-4.5 text-sidebar-muted" strokeWidth={2} />
           Settings
-        </Link>
+        </button>
       </div>
     </aside>
   );
 }
+
