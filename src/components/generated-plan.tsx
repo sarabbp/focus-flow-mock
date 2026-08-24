@@ -39,6 +39,7 @@ export function GeneratedPlan({
 }: GeneratedPlanProps) {
   const [editing, setEditing] = useState(false);
   const [newTag, setNewTag] = useState("");
+  const [dragId, setDragId] = useState<string | null>(null);
   const rateLabel = plan.rate.trim() ? `$${plan.rate.trim()}/h` : "Rate not set";
 
   const patch = (p: Partial<DraftPlan>) => onChange({ ...plan, ...p });
