@@ -40,6 +40,7 @@ function pruneOldBuilds() {
 
 export function loadState(): PersistedState | null {
   if (typeof window === "undefined") return null;
+  pruneOldBuilds();
   try {
     const raw = window.localStorage.getItem(KEY);
     if (!raw) return null;
