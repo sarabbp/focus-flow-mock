@@ -11,6 +11,7 @@ import { AiAddModal } from "@/components/ai-add-modal";
 import { GeneratedPlan } from "@/components/generated-plan";
 import { cn } from "@/lib/utils";
 import { buildPlanFromPrompt } from "@/lib/ai-parse";
+import { scheduleEntries } from "@/lib/schedule";
 import {
   consumeReopenRequest,
   loadState,
