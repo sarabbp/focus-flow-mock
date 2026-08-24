@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { ArrowLeft, ArrowRight, CalendarCheck, Check, DollarSign, Folder, Sparkles } from "lucide-react";
+import { ArrowLeft, ArrowRight, CalendarCheck, Check, DollarSign, Folder, Sparkles, X } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
