@@ -203,7 +203,7 @@ export function GeneratedPlan({
             title="Each task becomes a card in your Tasks Kanban board"
             className="bg-primary/10 font-normal normal-case tracking-normal text-primary"
           >
-            Creates cards on Kanban Board
+            Creates cards on Kanban Board and Timer
           </Badge>
         </div>
         {editing ? (
