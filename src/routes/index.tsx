@@ -164,7 +164,32 @@ function Dashboard() {
                 onDismiss={rerun}
               />
             )}
-            <TimerCard entry={timerEntry} activeTimer={activeTimer} onTimerToggle={setActiveTimer} />
+            <div
+              className={cn(
+                "space-y-3 transition-opacity duration-500",
+                !hasWorkspace && "opacity-50",
+              )}
+            >
+              {hasWorkspace && !showSetup && (
+                <div className="flex justify-end">
+                  <button
+                    type="button"
+                    onClick={() => setAddOpen(true)}
+                    className="inline-flex items-center gap-2 rounded-full border border-primary/30 bg-primary/5 px-3 py-1.5 text-xs font-medium text-primary transition-colors hover:bg-primary/10"
+                  >
+                    <Sparkles className="h-3.5 w-3.5" /> AI Add Project
+                    <kbd className="rounded border border-primary/30 px-1 font-sans text-[10px] text-primary/80">
+                      ⌘K
+                    </kbd>
+                  </button>
+                </div>
+              )}
+              <TimerCard
+                entry={timerEntry}
+                activeTimer={activeTimer}
+                onTimerToggle={setActiveTimer}
+              />
+            </div>
             <RecentEntries
               entries={entries}
               trackedLabel={entries.length === 0 ? "0m tracked" : "3h 5m tracked"}
