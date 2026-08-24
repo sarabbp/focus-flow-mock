@@ -1,8 +1,7 @@
 import { useState } from "react";
-import { ArrowRight, CalendarCheck, Loader2, Sparkles } from "lucide-react";
+import { ArrowRight, Loader2, Sparkles } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
 
 export const QUICK_PILLS = [
   { label: "Freelance Designer ($85/hr)", prompt: "Freelance design work for Northwind Studio at $85/hr" },
@@ -12,27 +11,22 @@ export const QUICK_PILLS = [
 
 interface AiSetupBarProps {
   loading: boolean;
-  calendarConnected: boolean;
   onSubmit: (prompt: string) => void;
-  onConnectCalendar: () => void;
 }
 
-export function AiSetupBar({
-  loading,
-  calendarConnected,
-  onSubmit,
-  onConnectCalendar,
-}: AiSetupBarProps) {
+export function AiSetupBar({ loading, onSubmit }: AiSetupBarProps) {
   const [value, setValue] = useState("");
 
   return (
-    <section className="relative overflow-hidden rounded-2xl border border-primary/30 bg-gradient-to-br from-primary/[0.07] via-background to-background p-6 shadow-lg shadow-primary/10 ring-1 ring-primary/20">
+    <section className="relative overflow-hidden rounded-2xl border border-primary/30 bg-gradient-to-br from-primary/[0.07] via-background to-background p-8 shadow-lg shadow-primary/10 ring-1 ring-primary/20">
       <div className="flex items-center gap-2 text-xs font-medium uppercase tracking-wide text-primary">
         <Sparkles className="h-3.5 w-3.5" /> Focus AI setup
       </div>
       <h2 className="mt-2 text-xl font-bold tracking-tight text-foreground">
         ⚡ Quick Start: Build your workspace in 30 seconds
       </h2>
+
+
 
 
 
@@ -67,38 +61,19 @@ export function AiSetupBar({
             </Button>
           </form>
 
-          <p className="mt-2 text-xs text-muted-foreground">
-            Included in your 21-day Premium Trial. Standard manual setup always available.
-          </p>
-
-
-
-          <div className="mt-3 flex flex-wrap items-center gap-2">
+          <div className="mt-5 flex flex-wrap items-center gap-2.5">
             {QUICK_PILLS.map((pill) => (
               <button
                 key={pill.label}
                 type="button"
                 onClick={() => onSubmit(pill.prompt)}
-                className="rounded-full border border-border bg-background px-3 py-1.5 text-xs font-medium text-foreground transition-colors hover:border-primary/40 hover:bg-secondary"
+                className="rounded-full border border-border bg-background px-3.5 py-2 text-xs font-medium text-foreground transition-colors hover:border-primary/40 hover:bg-secondary"
               >
                 {pill.label}
               </button>
             ))}
           </div>
 
-          <button
-            type="button"
-            onClick={onConnectCalendar}
-            className={cn(
-              "mt-4 inline-flex items-center gap-1.5 text-xs text-muted-foreground transition-colors hover:text-foreground",
-              calendarConnected && "text-primary hover:text-primary",
-            )}
-          >
-            <CalendarCheck className="h-3.5 w-3.5" />
-            {calendarConnected
-              ? "Google Calendar connected — daily schedule will auto-sync"
-              : "or/and Connect Google Calendar to auto-sync daily schedule"}
-          </button>
         </>
       )}
     </section>
