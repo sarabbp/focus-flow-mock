@@ -1,9 +1,8 @@
-import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
+import { Link, useRouterState } from "@tanstack/react-router";
 import {
   LayoutDashboard,
   Clock,
   ListChecks,
-  CalendarDays,
   BarChart3,
   Settings,
   ChevronDown,
@@ -20,11 +19,9 @@ import {
   HelpCircle,
   Download,
   Zap,
-  Sparkles,
 } from "lucide-react";
 
 import { cn } from "@/lib/utils";
-import { requestReopenOnboarding } from "@/lib/onboarding-storage";
 
 type NavItem = {
   title: string;
