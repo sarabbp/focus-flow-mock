@@ -61,6 +61,16 @@ export function OnboardingModal({
           <Sparkles className="h-4 w-4 text-primary" />
           <span className="text-sm font-semibold text-foreground">Set up Focus</span>
           <span className="ml-auto text-xs text-muted-foreground">Step {step + 1} of 3</span>
+          {onCancel && (
+            <button
+              type="button"
+              onClick={onCancel}
+              aria-label="Close setup"
+              className="flex h-7 w-7 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-secondary"
+            >
+              <X className="h-4 w-4" />
+            </button>
+          )}
         </div>
 
         <div className="flex gap-1.5 px-6 pt-4">
