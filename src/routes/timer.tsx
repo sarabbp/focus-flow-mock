@@ -17,6 +17,7 @@ import {
   Hash,
   Minus,
   UtensilsCrossed,
+  Clock,
 } from "lucide-react";
 
 import { useCallback, useEffect, useState } from "react";
@@ -261,7 +262,7 @@ function TimerPage() {
           </div>
           <span className="font-semibold text-foreground">{formatTotal(loggedMinutes)}</span>
           <span className="ml-2 inline-flex items-center gap-1.5 rounded-full bg-secondary px-2 py-0.5 font-medium text-muted-foreground">
-            <Clock3 /> {formatClock(settings.startHour)} – {formatClock(settings.endHour)}
+            <Clock className="h-3 w-3" /> {formatClock(settings.startHour)} – {formatClock(settings.endHour)}
           </span>
           {hasLunch && (
             <span className="inline-flex items-center gap-1.5 rounded-full bg-secondary px-2 py-0.5 font-medium text-muted-foreground">
@@ -428,10 +429,6 @@ function TimerPage() {
       />
     </div>
   );
-}
-
-function Clock3() {
-  return <CalendarDays className="h-3 w-3" />;
 }
 
 function Chip({ icon: Icon, label }: { icon: typeof AtSign; label: string }) {
