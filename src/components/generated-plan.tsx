@@ -179,8 +179,26 @@ export function GeneratedPlan({
         </div>
         {editing ? (
           <ul className="mt-2 space-y-2">
-            {plan.entries.map((entry) => (
-              <li key={entry.id} className="flex items-center gap-2">
+            {plan.entries.map((entry, index) => (
+              <li
+                key={entry.id}
+                draggable
+                onDragStart={() => setDragId(entry.id)}
+                onDragEnd={() => setDragId(null)}
+                onDragOver={(e) => {
+                  e.preventDefault();
+                  if (dragId && dragId !== entry.id) moveEntry(dragId, index);
+                }}
+                className={`flex items-center gap-2 rounded-lg transition-colors ${
+                  dragId === entry.id ? "opacity-60 ring-2 ring-primary/30" : ""
+                }`}
+              >
+                <span
+                  aria-hidden="true"
+                  className="flex h-9 w-6 flex-shrink-0 cursor-grab items-center justify-center text-muted-foreground"
+                >
+                  <GripVertical className="h-4 w-4" />
+                </span>
                 <Input
                   value={entry.title}
                   onChange={(e) => updateEntry(entry.id, { title: e.target.value })}
@@ -193,6 +211,24 @@ export function GeneratedPlan({
                   className="w-24"
                   aria-label="Duration"
                 />
+                <button
+                  type="button"
+                  onClick={() => moveEntry(entry.id, index - 1)}
+                  disabled={index === 0}
+                  aria-label={`Move ${entry.title} up`}
+                  className="flex h-9 w-8 flex-shrink-0 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground disabled:opacity-30"
+                >
+                  <ArrowUp className="h-4 w-4" />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => moveEntry(entry.id, index + 1)}
+                  disabled={index === plan.entries.length - 1}
+                  aria-label={`Move ${entry.title} down`}
+                  className="flex h-9 w-8 flex-shrink-0 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground disabled:opacity-30"
+                >
+                  <ArrowDown className="h-4 w-4" />
+                </button>
                 <button
                   type="button"
                   onClick={() => patch({ entries: plan.entries.filter((e) => e.id !== entry.id) })}
