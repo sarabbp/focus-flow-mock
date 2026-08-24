@@ -1,11 +1,15 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { Sparkles } from "lucide-react";
+import { toast } from "sonner";
 
 import { TimerCard, type TimerEntry } from "@/components/timer";
 import { RecentEntries, type TimeEntry } from "@/components/recent-entries";
 import { Sidebar } from "@/components/sidebar";
 import { AiSetupBar } from "@/components/ai-setup-bar";
+import { AiAddModal } from "@/components/ai-add-modal";
 import { GeneratedPlan } from "@/components/generated-plan";
+import { cn } from "@/lib/utils";
 import { buildPlanFromPrompt } from "@/lib/ai-parse";
 import {
   consumeReopenRequest,
