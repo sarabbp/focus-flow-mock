@@ -281,6 +281,18 @@ function TimerPage() {
                     )}
                   />
                 ))}
+                {/* Lunch block 1pm – 2pm */}
+                <div
+                  className="absolute left-1 right-1 flex items-center justify-center rounded-md border border-border bg-secondary"
+                  style={{
+                    top: (13 - GRID_START) * ROW_HEIGHT,
+                    height: ROW_HEIGHT - 2,
+                  }}
+                >
+                  <span className="text-[11px] font-medium text-muted-foreground">
+                    Lunch · 1:00 – 2:00 PM
+                  </span>
+                </div>
                 {positioned
                   .filter((p) => p.day === dayIndex)
                   .map(({ entry, start, end }) => (
