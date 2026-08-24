@@ -270,7 +270,7 @@ function TimerPage() {
                 </div>
               ))}
             </div>
-            {days.map((day) => (
+            {days.map((day, dayIndex) => (
               <div key={day.label} className="relative flex-1 border-l border-border">
                 {hours.map((h) => (
                   <div
@@ -281,8 +281,9 @@ function TimerPage() {
                     )}
                   />
                 ))}
-                {day.active &&
-                  positioned.map(({ entry, start, end }) => (
+                {positioned
+                  .filter((p) => p.day === dayIndex)
+                  .map(({ entry, start, end }) => (
                     <div
                       key={entry.id}
                       className="absolute left-1 right-1 overflow-hidden rounded-md border border-timer/30 bg-timer/10 px-2 py-1 text-left"
