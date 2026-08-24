@@ -1,11 +1,27 @@
 import type { TimeEntry } from "@/components/recent-entries";
 
-export const WORK_START = 9; // 9:00 AM
-export const WORK_END = 17; // 5:00 PM
-export const WORK_DAYS = 5; // Mon–Fri
-export const LUNCH_START = 13; // 1:00 PM
-export const LUNCH_END = 14; // 2:00 PM
-export const GAP_MINUTES = 10; // minimum break between tasks
+export interface WorkSettings {
+  /** Decimal hours, e.g. 9 or 8.5 */
+  startHour: number;
+  endHour: number;
+  /** 0 = Monday … 6 = Sunday */
+  weekdays: number[];
+  lunchStart: number;
+  lunchEnd: number;
+  /** Minimum break between two tasks, in minutes */
+  gapMinutes: number;
+}
+
+export const DEFAULT_WORK_SETTINGS: WorkSettings = {
+  startHour: 9,
+  endHour: 17,
+  weekdays: [0, 1, 2, 3, 4],
+  lunchStart: 13,
+  lunchEnd: 14,
+  gapMinutes: 10,
+};
+
+export const WEEKDAY_LABELS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 
 /** "1h 30m" / "45m" / "2h" -> minutes */
 export function durationToMinutes(value: string): number {
@@ -25,7 +41,8 @@ export function formatClock(hoursDecimal: number): string {
   return `${display}:${String(mins).padStart(2, "0")} ${suffix}`;
 }
 
-function parseClock(value: string): number | null {
+/** "9:30 AM" -> 9.5 */
+export function parseClock(value: string): number | null {
   const m = value.trim().match(/^(\d{1,2})(?::(\d{2}))?\s*(AM|PM)?$/i);
   if (!m) return null;
   let h = Number(m[1]);
@@ -36,62 +53,129 @@ function parseClock(value: string): number | null {
   return h + min / 60;
 }
 
-/** Next free time per working day, given already-scheduled entries. */
-function occupancy(existing: TimeEntry[]): number[] {
-  const cursors = Array.from({ length: WORK_DAYS }, () => WORK_START);
-  for (const entry of existing) {
-    const day = Math.min(Math.max(entry.day ?? 0, 0), WORK_DAYS - 1);
-    const end = parseClock(entry.end);
-    if (end !== null && end > cursors[day]!) cursors[day] = end;
-  }
-  return cursors;
+function hasLunch(s: WorkSettings) {
+  return s.lunchEnd > s.lunchStart;
+}
+
+/** Does [start, start+hours) fit inside the working window without hitting lunch? */
+function fits(start: number, hours: number, s: WorkSettings) {
+  if (start < s.startHour || start + hours > s.endHour) return false;
+  if (!hasLunch(s)) return true;
+  return start >= s.lunchEnd || start + hours <= s.lunchStart;
+}
+
+/** Nudge a start time out of the lunch block. */
+function afterLunch(start: number, s: WorkSettings) {
+  return hasLunch(s) && start > s.lunchStart && start < s.lunchEnd ? s.lunchEnd : start;
 }
 
 /**
- * Pack `incoming` entries into 9am–5pm working days, continuing after whatever
- * `existing` already occupies. Keeps a 10 minute gap between tasks, never
- * schedules across the 1pm–2pm lunch block, and rolls over to the next
- * available day when a task would spill past 5pm.
+ * Pack `incoming` entries into the configured working window, continuing after
+ * whatever `existing` already occupies. Always leaves the configured gap
+ * between tasks, never schedules across the lunch block, and rolls over to the
+ * next configured working day when a task would spill past the end of day.
  */
-export function scheduleEntries(existing: TimeEntry[], incoming: TimeEntry[]): TimeEntry[] {
-  const cursors = occupancy(existing);
-  const gap = GAP_MINUTES / 60;
-  // Existing entries already end somewhere; leave a gap after them.
-  for (let i = 0; i < cursors.length; i += 1) {
-    if (cursors[i]! > WORK_START) cursors[i] = cursors[i]! + gap;
+export function scheduleEntries(
+  existing: TimeEntry[],
+  incoming: TimeEntry[],
+  settings: WorkSettings = DEFAULT_WORK_SETTINGS,
+): TimeEntry[] {
+  const s = settings;
+  const gap = s.gapMinutes / 60;
+  const days = s.weekdays.length ? [...s.weekdays].sort((a, b) => a - b) : [0];
+
+  const cursors = new Map<number, number>();
+  for (const entry of existing) {
+    const day = entry.day ?? days[0]!;
+    const end = parseClock(entry.end);
+    if (end === null) continue;
+    cursors.set(day, Math.max(cursors.get(day) ?? s.startHour, end + gap));
   }
 
-  let day = cursors.findIndex((c) => c < WORK_END);
-  if (day < 0) day = 0;
-
-  const fits = (start: number, hours: number) => {
-    if (start + hours > WORK_END) return false;
-    // must not overlap lunch
-    return start >= LUNCH_END || start + hours <= LUNCH_START;
-  };
-
+  let di = 0;
   return incoming.map((entry) => {
-    const minutes = durationToMinutes(entry.duration);
-    const hours = minutes / 60;
+    const hours = durationToMinutes(entry.duration) / 60;
+    let day = days[di]!;
+    let start = afterLunch(Math.max(cursors.get(day) ?? s.startHour, s.startHour), s);
+    if (!fits(start, hours, s) && hasLunch(s) && start < s.lunchStart) start = s.lunchEnd;
 
-    let start = Math.max(cursors[day]!, WORK_START);
-    if (start > LUNCH_START && start < LUNCH_END) start = LUNCH_END;
-    if (!fits(start, hours) && start < LUNCH_START) start = LUNCH_END;
-
-    while (day < WORK_DAYS - 1 && !fits(start, hours)) {
-      day += 1;
-      start = WORK_START;
+    while (!fits(start, hours, s) && di < days.length - 1) {
+      di += 1;
+      day = days[di]!;
+      start = s.startHour;
+      if (!fits(start, hours, s) && hasLunch(s) && start < s.lunchStart) start = s.lunchEnd;
     }
 
-    if (!fits(start, hours)) {
-      // Last day fallback: clamp inside the afternoon window.
-      start = Math.max(WORK_START, Math.min(start, WORK_END - hours));
-      if (start > LUNCH_START && start < LUNCH_END) start = LUNCH_END;
+    if (!fits(start, hours, s)) {
+      start = afterLunch(Math.max(s.startHour, Math.min(start, s.endHour - hours)), s);
     }
 
     const end = start + hours;
-    cursors[day] = end + gap;
-
+    cursors.set(day, end + gap);
     return { ...entry, day, start: formatClock(start), end: formatClock(end) };
   });
 }
+
+/** Re-pack every entry in order — used after reordering tasks. */
+export function rescheduleAll(entries: TimeEntry[], settings = DEFAULT_WORK_SETTINGS) {
+  return scheduleEntries([], entries, settings);
+}
+
+/**
+ * Move one entry to (roughly) a new day/time, snapping to the nearest valid
+ * slot: inside working hours, outside lunch, and at least `gapMinutes` away
+ * from the neighbouring entries on that day.
+ */
+export function moveEntryToSlot(
+  entries: TimeEntry[],
+  id: string,
+  day: number,
+  desiredStart: number,
+  settings: WorkSettings = DEFAULT_WORK_SETTINGS,
+): TimeEntry[] {
+  const s = settings;
+  const gap = s.gapMinutes / 60;
+  const target = entries.find((e) => e.id === id);
+  if (!target) return entries;
+  const hours = durationToMinutes(target.duration) / 60;
+
+  const others = entries
+    .filter((e) => e.id !== id && (e.day ?? s.weekdays[0]) === day)
+    .map((e) => ({ start: parseClock(e.start) ?? 0, end: parseClock(e.end) ?? 0 }))
+    .sort((a, b) => a.start - b.start);
+
+  const snap = (v: number) => Math.round(v * 12) / 12; // 5-minute grid
+  const collides = (start: number) =>
+    others.find((o) => start < o.end + gap && start + hours > o.start - gap);
+
+  const search = (from: number) => {
+    let start = afterLunch(snap(Math.max(from, s.startHour)), s);
+    for (let i = 0; i < 60; i += 1) {
+      if (!fits(start, hours, s)) {
+        if (hasLunch(s) && start < s.lunchEnd) {
+          start = s.lunchEnd;
+          continue;
+        }
+        return null;
+      }
+      const clash = collides(start);
+      if (!clash) return start;
+      start = afterLunch(snap(clash.end + gap), s);
+    }
+    return null;
+  };
+
+  const start = search(desiredStart) ?? search(s.startHour);
+  if (start === null) return entries;
+
+  return entries.map((e) =>
+    e.id === id
+      ? { ...e, day, start: formatClock(start), end: formatClock(start + hours) }
+      : e,
+  );
+}
+
+// Legacy named exports kept for compatibility.
+export const WORK_START = DEFAULT_WORK_SETTINGS.startHour;
+export const WORK_END = DEFAULT_WORK_SETTINGS.endHour;
+export const WORK_DAYS = 5;
