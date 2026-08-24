@@ -1,8 +1,11 @@
 import { useState } from "react";
 import {
+  ArrowDown,
+  ArrowUp,
   Check,
   CheckCircle2,
   DollarSign,
+  GripVertical,
   Pencil,
   Play,
   Plus,
