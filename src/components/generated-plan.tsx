@@ -47,6 +47,15 @@ export function GeneratedPlan({
   const updateEntry = (id: string, changes: Partial<DraftPlan["entries"][number]>) =>
     patch({ entries: plan.entries.map((e) => (e.id === id ? { ...e, ...changes } : e)) });
 
+  const moveEntry = (id: string, toIndex: number) => {
+    const from = plan.entries.findIndex((e) => e.id === id);
+    if (from < 0 || toIndex < 0 || toIndex >= plan.entries.length || from === toIndex) return;
+    const next = [...plan.entries];
+    const [moved] = next.splice(from, 1);
+    next.splice(toIndex, 0, moved!);
+    patch({ entries: next });
+  };
+
   const addTag = () => {
     const tag = newTag.trim();
     if (!tag || plan.tags.includes(tag)) return;
