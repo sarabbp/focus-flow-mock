@@ -18,8 +18,12 @@ import {
   Minus,
 } from "lucide-react";
 
+import { useEffect, useState } from "react";
+
 import { Sidebar } from "@/components/sidebar";
 import { cn } from "@/lib/utils";
+import { loadState } from "@/lib/onboarding-storage";
+import type { TimeEntry } from "@/components/recent-entries";
 
 export const Route = createFileRoute("/timer")({
   head: () => ({
@@ -36,12 +40,31 @@ export const Route = createFileRoute("/timer")({
 });
 
 const days = [
-  { date: 24, label: "Mon", total: "1h 24m", active: true },
-  { date: 25, label: "Tue", total: "–" },
-  { date: 26, label: "Wed", total: "–" },
-  { date: 27, label: "Thu", total: "–" },
-  { date: 28, label: "Fri", total: "–" },
+  { date: 24, label: "Mon", active: true },
+  { date: 25, label: "Tue" },
+  { date: 26, label: "Wed" },
+  { date: 27, label: "Thu" },
+  { date: 28, label: "Fri" },
 ];
+
+/** "9:30 AM" -> 9.5 (hours since midnight) */
+function parseTime(value: string): number | null {
+  const m = value.trim().match(/^(\d{1,2})(?::(\d{2}))?\s*(AM|PM)?$/i);
+  if (!m) return null;
+  let h = Number(m[1]);
+  const min = Number(m[2] ?? 0);
+  const period = m[3]?.toUpperCase();
+  if (period === "PM" && h !== 12) h += 12;
+  if (period === "AM" && h === 12) h = 0;
+  return h + min / 60;
+}
+
+function formatTotal(minutes: number) {
+  if (minutes <= 0) return "–";
+  const h = Math.floor(minutes / 60);
+  const m = Math.round(minutes % 60);
+  return h > 0 ? (m > 0 ? `${h}h ${m}m` : `${h}h`) : `${m}m`;
+}
 
 const hours = Array.from({ length: 13 }, (_, i) => i + 7); // 7:00 → 19:00
 
@@ -53,8 +76,29 @@ function hourLabel(h: number) {
 
 const WORK_START = 9;
 const WORK_END = 17;
+const ROW_HEIGHT = 64; // matches h-16
+const GRID_START = 7;
 
 function TimerPage() {
+  const [entries, setEntries] = useState<TimeEntry[]>([]);
+
+  useEffect(() => {
+    const saved = loadState();
+    if (saved?.entries?.length) setEntries(saved.entries);
+  }, []);
+
+  const positioned = entries
+    .map((entry) => {
+      const start = parseTime(entry.start);
+      const end = parseTime(entry.end);
+      if (start === null || end === null || end <= start) return null;
+      return { entry, start, end, minutes: (end - start) * 60 };
+    })
+    .filter((v): v is { entry: TimeEntry; start: number; end: number; minutes: number } => !!v);
+
+  const loggedMinutes = positioned.reduce((sum, p) => sum + p.minutes, 0);
+  const loggedLabel = formatTotal(loggedMinutes);
+
   return (
     <div className="flex h-screen w-full overflow-hidden bg-panel">
       <Sidebar />
@@ -150,7 +194,7 @@ function TimerPage() {
           <div className="h-1.5 w-40 overflow-hidden rounded-full bg-secondary">
             <div className="h-full w-3/4 rounded-full bg-timer" />
           </div>
-          <span className="font-semibold text-foreground">1h 24m</span>
+          <span className="font-semibold text-foreground">{loggedLabel}</span>
           <span className="ml-2 font-medium text-muted-foreground">Planned</span>
           <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-secondary">
             <div className="h-full w-5/6 rounded-full bg-timer" />
@@ -200,7 +244,7 @@ function TimerPage() {
                     day.active ? "font-semibold text-timer" : "text-muted-foreground",
                   )}
                 >
-                  {day.total}
+                  {day.active ? loggedLabel : "–"}
                 </span>
               </div>
             </div>
@@ -221,7 +265,7 @@ function TimerPage() {
               ))}
             </div>
             {days.map((day) => (
-              <div key={day.label} className="flex-1 border-l border-border">
+              <div key={day.label} className="relative flex-1 border-l border-border">
                 {hours.map((h) => (
                   <div
                     key={h}
@@ -231,6 +275,23 @@ function TimerPage() {
                     )}
                   />
                 ))}
+                {day.active &&
+                  positioned.map(({ entry, start, end }) => (
+                    <div
+                      key={entry.id}
+                      className="absolute left-1 right-1 overflow-hidden rounded-md border border-timer/30 bg-timer/10 px-2 py-1 text-left"
+                      style={{
+                        top: (start - GRID_START) * ROW_HEIGHT,
+                        height: Math.max((end - start) * ROW_HEIGHT - 2, 20),
+                      }}
+                    >
+                      <p className="truncate text-xs font-semibold text-timer">{entry.title}</p>
+                      <p className="truncate text-[11px] text-timer/80">
+                        {entry.start} – {entry.end} · {entry.duration}
+                      </p>
+                      <p className="truncate text-[11px] text-muted-foreground">{entry.project}</p>
+                    </div>
+                  ))}
               </div>
             ))}
           </div>
