@@ -267,7 +267,7 @@ export function GeneratedPlan({
                 aria-label="New tag"
                 className="h-8 w-32"
               />
-              <Button type="button" variant="outline" size="sm" onClick={addTag}>
+              <Button type="button" variant="outline" size="sm" onClick={addTag} aria-label="Add tag">
                 <Plus className="h-3.5 w-3.5" />
               </Button>
             </div>
