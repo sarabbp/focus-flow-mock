@@ -43,7 +43,7 @@ const days = [
   { date: 28, label: "Fri", total: "–" },
 ];
 
-const hours = Array.from({ length: 19 }, (_, i) => i + 1); // 1:00 → 19:00
+const hours = Array.from({ length: 13 }, (_, i) => i + 7); // 7:00 → 19:00
 
 function hourLabel(h: number) {
   const suffix = h < 12 ? "AM" : "PM";
@@ -51,8 +51,8 @@ function hourLabel(h: number) {
   return `${display}:00 ${suffix}`;
 }
 
-const WORK_START = 9;
-const WORK_END = 17;
+const WORK_START = 7;
+const WORK_END = 19;
 
 function TimerPage() {
   return (
