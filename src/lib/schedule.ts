@@ -3,6 +3,9 @@ import type { TimeEntry } from "@/components/recent-entries";
 export const WORK_START = 9; // 9:00 AM
 export const WORK_END = 17; // 5:00 PM
 export const WORK_DAYS = 5; // Mon–Fri
+export const LUNCH_START = 13; // 1:00 PM
+export const LUNCH_END = 14; // 2:00 PM
+export const GAP_MINUTES = 10; // minimum break between tasks
 
 /** "1h 30m" / "45m" / "2h" -> minutes */
 export function durationToMinutes(value: string): number {
