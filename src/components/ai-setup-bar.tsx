@@ -1,8 +1,7 @@
 import { useState } from "react";
-import { ArrowRight, CalendarCheck, Loader2, Sparkles } from "lucide-react";
+import { ArrowRight, Loader2, Sparkles } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
 
 export const QUICK_PILLS = [
   { label: "Freelance Designer ($85/hr)", prompt: "Freelance design work for Northwind Studio at $85/hr" },
@@ -12,27 +11,22 @@ export const QUICK_PILLS = [
 
 interface AiSetupBarProps {
   loading: boolean;
-  calendarConnected: boolean;
   onSubmit: (prompt: string) => void;
-  onConnectCalendar: () => void;
 }
 
-export function AiSetupBar({
-  loading,
-  calendarConnected,
-  onSubmit,
-  onConnectCalendar,
-}: AiSetupBarProps) {
+export function AiSetupBar({ loading, onSubmit }: AiSetupBarProps) {
   const [value, setValue] = useState("");
 
   return (
-    <section className="relative overflow-hidden rounded-2xl border border-primary/30 bg-gradient-to-br from-primary/[0.07] via-background to-background p-6 shadow-lg shadow-primary/10 ring-1 ring-primary/20">
+    <section className="relative overflow-hidden rounded-2xl border border-primary/30 bg-gradient-to-br from-primary/[0.07] via-background to-background p-8 shadow-lg shadow-primary/10 ring-1 ring-primary/20">
       <div className="flex items-center gap-2 text-xs font-medium uppercase tracking-wide text-primary">
         <Sparkles className="h-3.5 w-3.5" /> Focus AI setup
       </div>
       <h2 className="mt-2 text-xl font-bold tracking-tight text-foreground">
         ⚡ Quick Start: Build your workspace in 30 seconds
       </h2>
+
+
 
 
 
