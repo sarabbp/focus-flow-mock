@@ -3,6 +3,9 @@ import type { TimeEntry } from "@/components/recent-entries";
 export const WORK_START = 9; // 9:00 AM
 export const WORK_END = 17; // 5:00 PM
 export const WORK_DAYS = 5; // Mon–Fri
+export const LUNCH_START = 13; // 1:00 PM
+export const LUNCH_END = 14; // 2:00 PM
+export const GAP_MINUTES = 10; // minimum break between tasks
 
 /** "1h 30m" / "45m" / "2h" -> minutes */
 export function durationToMinutes(value: string): number {
@@ -46,23 +49,48 @@ function occupancy(existing: TimeEntry[]): number[] {
 
 /**
  * Pack `incoming` entries into 9am–5pm working days, continuing after whatever
- * `existing` already occupies. Anything that would spill past 5pm moves to the
- * next available day.
+ * `existing` already occupies. Keeps a 10 minute gap between tasks, never
+ * schedules across the 1pm–2pm lunch block, and rolls over to the next
+ * available day when a task would spill past 5pm.
  */
 export function scheduleEntries(existing: TimeEntry[], incoming: TimeEntry[]): TimeEntry[] {
   const cursors = occupancy(existing);
+  const gap = GAP_MINUTES / 60;
+  // Existing entries already end somewhere; leave a gap after them.
+  for (let i = 0; i < cursors.length; i += 1) {
+    if (cursors[i]! > WORK_START) cursors[i] = cursors[i]! + gap;
+  }
+
   let day = cursors.findIndex((c) => c < WORK_END);
   if (day < 0) day = 0;
+
+  const fits = (start: number, hours: number) => {
+    if (start + hours > WORK_END) return false;
+    // must not overlap lunch
+    return start >= LUNCH_END || start + hours <= LUNCH_START;
+  };
 
   return incoming.map((entry) => {
     const minutes = durationToMinutes(entry.duration);
     const hours = minutes / 60;
 
-    while (day < WORK_DAYS - 1 && cursors[day]! + hours > WORK_END) day += 1;
-    // Last day: clamp so entries stay inside the working window.
-    const start = Math.min(cursors[day]!, WORK_END - hours);
+    let start = Math.max(cursors[day]!, WORK_START);
+    if (start > LUNCH_START && start < LUNCH_END) start = LUNCH_END;
+    if (!fits(start, hours) && start < LUNCH_START) start = LUNCH_END;
+
+    while (day < WORK_DAYS - 1 && !fits(start, hours)) {
+      day += 1;
+      start = WORK_START;
+    }
+
+    if (!fits(start, hours)) {
+      // Last day fallback: clamp inside the afternoon window.
+      start = Math.max(WORK_START, Math.min(start, WORK_END - hours));
+      if (start > LUNCH_START && start < LUNCH_END) start = LUNCH_END;
+    }
+
     const end = start + hours;
-    cursors[day] = end;
+    cursors[day] = end + gap;
 
     return { ...entry, day, start: formatClock(start), end: formatClock(end) };
   });
