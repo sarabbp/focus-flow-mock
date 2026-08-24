@@ -282,17 +282,25 @@ export function GeneratedPlan({
       </div>
 
       <div className="mt-6 flex flex-wrap items-center gap-3">
-        <Button onClick={onApprove} className="gap-1.5">
-          <Play className="h-4 w-4 fill-current" /> Approve &amp; start timer
-        </Button>
+        <span className="relative inline-flex">
+          <span className="absolute -inset-1 animate-pulse rounded-xl bg-primary/25" />
+          <Button
+            onClick={onApprove}
+            size="lg"
+            className="relative gap-2 px-6 text-base shadow-lg shadow-primary/20"
+          >
+            <Play className="h-4 w-4 fill-current" /> Approve &amp; Start 25m Focus Timer
+          </Button>
+        </span>
         <button
           type="button"
           onClick={onDismiss}
           className="text-sm text-muted-foreground transition-colors hover:text-foreground"
         >
-          I&apos;ll set it up myself
+          Start over
         </button>
       </div>
+
     </section>
   );
 }
