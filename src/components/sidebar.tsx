@@ -1,4 +1,4 @@
-import { Link, useRouterState } from "@tanstack/react-router";
+import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
 import {
   LayoutDashboard,
   Clock,
@@ -20,9 +20,11 @@ import {
   HelpCircle,
   Download,
   Zap,
+  Sparkles,
 } from "lucide-react";
 
 import { cn } from "@/lib/utils";
+import { requestReopenOnboarding } from "@/lib/onboarding-storage";
 
 type NavItem = {
   title: string;
@@ -65,6 +67,12 @@ const sections: { label: string; items: NavItem[] }[] = [
 
 export function Sidebar() {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
+  const navigate = useNavigate();
+
+  const rerunSetup = () => {
+    requestReopenOnboarding();
+    if (pathname !== "/") void navigate({ to: "/" });
+  };
 
   return (
     <div className="flex h-full flex-shrink-0">
@@ -158,6 +166,14 @@ export function Sidebar() {
         </nav>
 
         <div className="flex flex-col gap-0.5 border-t border-sidebar-border px-2 py-3">
+          <button
+            type="button"
+            onClick={rerunSetup}
+            className="flex items-center gap-2.5 rounded-lg px-3 py-1.5 text-sm font-medium text-sidebar-foreground transition-colors hover:bg-sidebar-hover"
+          >
+            <Sparkles className="h-4 w-4 text-timer" />
+            Re-run setup
+          </button>
           <button
             type="button"
             className="flex items-center gap-2.5 rounded-lg px-3 py-1.5 text-sm font-semibold text-sidebar-active-foreground transition-colors hover:bg-sidebar-hover"
