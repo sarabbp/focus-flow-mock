@@ -51,8 +51,8 @@ function hourLabel(h: number) {
   return `${display}:00 ${suffix}`;
 }
 
-const WORK_START = 7;
-const WORK_END = 19;
+const WORK_START = 9;
+const WORK_END = 17;
 
 function TimerPage() {
   return (
