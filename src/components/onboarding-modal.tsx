@@ -1,5 +1,15 @@
 import { useState } from "react";
-import { ArrowLeft, ArrowRight, CalendarCheck, Check, DollarSign, Folder, Sparkles, X } from "lucide-react";
+import {
+  ArrowLeft,
+  ArrowRight,
+  Briefcase,
+  CalendarCheck,
+  Check,
+  DollarSign,
+  Folder,
+  Sparkles,
+  X,
+} from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -8,6 +18,7 @@ import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
 
 export interface OnboardingAnswers {
+  role: string;
   project: string;
   client: string;
   rate: string;
@@ -16,9 +27,14 @@ export interface OnboardingAnswers {
 }
 
 const steps = [
-  { title: "What's your main project?", subtitle: "We'll set it up as your default tracking project.", icon: Folder },
+  { title: "What do you do?", subtitle: "Describe your role so we can tailor projects and tags.", icon: Briefcase },
   { title: "Client name & rate", subtitle: "Used to calculate billable amounts automatically.", icon: DollarSign },
-  { title: "Connect calendar or paste schedule", subtitle: "Focus turns your schedule into suggested time entries.", icon: CalendarCheck },
+  { title: "What's your main project?", subtitle: "We'll set it up as your default tracking project.", icon: Folder },
+  {
+    title: "Connect calendar or paste schedule",
+    subtitle: "Focus turns your schedule into suggested time entries.",
+    icon: CalendarCheck,
+  },
 ];
 
 export function OnboardingModal({
@@ -31,25 +47,28 @@ export function OnboardingModal({
   onCancel?: (() => void) | undefined;
 }) {
   const [step, setStep] = useState(0);
-  const [answers, setAnswers] = useState<OnboardingAnswers>(
-    initial ?? {
-      project: "",
-      client: "",
-      rate: "",
-      schedule: "",
-      calendarConnected: false,
-    },
-  );
+  const [answers, setAnswers] = useState<OnboardingAnswers>({
+    role: initial?.role ?? "",
+    project: initial?.project ?? "",
+    client: initial?.client ?? "",
+    rate: initial?.rate ?? "",
+    schedule: initial?.schedule ?? "",
+    calendarConnected: initial?.calendarConnected ?? false,
+  });
 
   const set = <K extends keyof OnboardingAnswers>(key: K, value: OnboardingAnswers[K]) =>
     setAnswers((a) => ({ ...a, [key]: value }));
 
+  const lastStep = steps.length - 1;
+
   const canContinue =
     step === 0
-      ? answers.project.trim().length > 0
+      ? answers.role.trim().length > 0
       : step === 1
         ? answers.client.trim().length > 0
-        : answers.calendarConnected || answers.schedule.trim().length > 0;
+        : step === 2
+          ? answers.project.trim().length > 0
+          : answers.calendarConnected || answers.schedule.trim().length > 0;
 
   const current = steps[step]!;
   const Icon = current.icon;
@@ -60,7 +79,9 @@ export function OnboardingModal({
         <div className="flex items-center gap-2 border-b border-border px-6 py-4">
           <Sparkles className="h-4 w-4 text-primary" />
           <span className="text-sm font-semibold text-foreground">Set up Focus</span>
-          <span className="ml-auto text-xs text-muted-foreground">Step {step + 1} of 3</span>
+          <span className="ml-auto text-xs text-muted-foreground">
+            Step {step + 1} of {steps.length}
+          </span>
           {onCancel && (
             <button
               type="button"
@@ -96,20 +117,21 @@ export function OnboardingModal({
           <div className="mt-6 space-y-4">
             {step === 0 && (
               <div className="space-y-2">
-                <Label htmlFor="project">Project name</Label>
-                <Input
-                  id="project"
+                <Label htmlFor="role">Your role</Label>
+                <Textarea
+                  id="role"
                   autoFocus
-                  placeholder="e.g. Website redesign"
-                  value={answers.project}
-                  onChange={(e) => set("project", e.target.value)}
+                  rows={3}
+                  placeholder="e.g. Freelance product designer working on web apps and brand systems"
+                  value={answers.role}
+                  onChange={(e) => set("role", e.target.value)}
                 />
                 <div className="flex flex-wrap gap-2 pt-1">
-                  {["Website redesign", "Brand identity", "Mobile app MVP"].map((s) => (
+                  {["Freelance designer", "Web developer", "Marketing consultant"].map((s) => (
                     <button
                       key={s}
                       type="button"
-                      onClick={() => set("project", s)}
+                      onClick={() => set("role", s)}
                       className="rounded-full border border-border px-3 py-1 text-xs text-muted-foreground transition-colors hover:bg-secondary hover:text-secondary-foreground"
                     >
                       {s}
@@ -145,6 +167,31 @@ export function OnboardingModal({
             )}
 
             {step === 2 && (
+              <div className="space-y-2">
+                <Label htmlFor="project">Project name</Label>
+                <Input
+                  id="project"
+                  autoFocus
+                  placeholder="e.g. Website redesign"
+                  value={answers.project}
+                  onChange={(e) => set("project", e.target.value)}
+                />
+                <div className="flex flex-wrap gap-2 pt-1">
+                  {["Website redesign", "Brand identity", "Mobile app MVP"].map((s) => (
+                    <button
+                      key={s}
+                      type="button"
+                      onClick={() => set("project", s)}
+                      className="rounded-full border border-border px-3 py-1 text-xs text-muted-foreground transition-colors hover:bg-secondary hover:text-secondary-foreground"
+                    >
+                      {s}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {step === 3 && (
               <div className="space-y-4">
                 <button
                   type="button"
@@ -197,11 +244,11 @@ export function OnboardingModal({
           </Button>
           <Button
             disabled={!canContinue}
-            onClick={() => (step === 2 ? onComplete(answers) : setStep((s) => s + 1))}
+            onClick={() => (step === lastStep ? onComplete(answers) : setStep((s) => s + 1))}
             className="gap-1.5"
           >
-            {step === 2 ? "Generate my dashboard" : "Continue"}
-            {step === 2 ? <Sparkles className="h-4 w-4" /> : <ArrowRight className="h-4 w-4" />}
+            {step === lastStep ? "Generate my dashboard" : "Continue"}
+            {step === lastStep ? <Sparkles className="h-4 w-4" /> : <ArrowRight className="h-4 w-4" />}
           </Button>
         </div>
       </div>
