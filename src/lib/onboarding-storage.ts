@@ -13,6 +13,8 @@ export interface PersistedState {
   prompt: string | null;
   calendarConnected: boolean;
   plan: DraftPlan | null;
+  /** Every approved plan, in the order they were created. */
+  plans: DraftPlan[];
   entries: TimeEntry[];
   timerEntry: TimerEntry | null;
   approved: boolean;
