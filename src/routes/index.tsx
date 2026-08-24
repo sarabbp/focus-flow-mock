@@ -215,6 +215,7 @@ function Dashboard() {
           </div>
         </div>
       </main>
+      <AiAddModal open={addOpen} onOpenChange={setAddOpen} onSubmit={handleAiAdd} />
     </div>
   );
 }
