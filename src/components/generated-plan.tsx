@@ -7,7 +7,7 @@ import {
   DollarSign,
   GripVertical,
   Pencil,
-  Play,
+  
   Plus,
   Sparkles,
   Tag,
