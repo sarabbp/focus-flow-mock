@@ -126,6 +126,22 @@ function Dashboard() {
 
   const hasWorkspace = entries.length > 0;
 
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key.toLowerCase() === "k" && (e.metaKey || e.ctrlKey)) {
+        e.preventDefault();
+        setAddOpen(true);
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, []);
+
+  const handleAiAdd = (value: string) => {
+    setShowSetup(true);
+    handleSubmit(value);
+  };
+
   return (
     <div className="flex h-screen w-full overflow-hidden bg-panel">
       <Sidebar />
