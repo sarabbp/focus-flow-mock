@@ -1,7 +1,9 @@
 import { useState } from "react";
-import { ArrowRight, Loader2, Sparkles } from "lucide-react";
+import { AlertCircle, ArrowRight, Info, Loader2, Sparkles } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
+
 
 export const QUICK_PILLS = [
   { label: "Freelance Designer ($85/hr)", prompt: "Freelance design work for Northwind Studio at $85/hr" },
