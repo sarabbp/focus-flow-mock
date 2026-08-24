@@ -116,7 +116,14 @@ function Dashboard() {
     setActiveTimer(next.id);
     approvedRef.current = true;
     setShowSetup(false);
+    toast.success("Workspace created!", {
+      description:
+        "We added your new client, project, and tasks to the left sidebar.",
+      duration: 2000,
+    });
   };
+
+  const hasWorkspace = entries.length > 0;
 
   return (
     <div className="flex h-screen w-full overflow-hidden bg-panel">
