@@ -235,9 +235,13 @@ function Dashboard() {
                     className="inline-flex items-center gap-2 rounded-full border border-primary/30 bg-primary/5 px-3 py-1.5 text-xs font-medium text-primary transition-colors hover:bg-primary/10"
                   >
                     <Sparkles className="h-3.5 w-3.5" /> AI Add Project
+                    <span className="rounded-full bg-primary/15 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-primary">
+                      Pro
+                    </span>
                     <kbd className="rounded border border-primary/30 px-1 font-sans text-[10px] text-primary/80">
                       ⌘K
                     </kbd>
+
                   </button>
                 </div>
               )}
