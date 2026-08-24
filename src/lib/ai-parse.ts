@@ -39,6 +39,12 @@ export function parsePrompt(prompt: string): { client: string; project: string; 
 
   project = project.replace(/^(i'?m\s+)?(working on|doing)\s+/i, "").trim();
 
+  // "Indie Gamers at $60/hr" — a bare name with a rate is a client, not a project.
+  if (!client && rate && !/\b\w+ing\b/i.test(project) && project.split(/\s+/).length <= 3) {
+    client = project;
+    project = "";
+  }
+
   return {
     client: client ? titleCase(client) : "Client",
     project: project ? titleCase(project) : "Main project",
