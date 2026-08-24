@@ -159,6 +159,7 @@ function Dashboard() {
   }, []);
 
   const handleAiAdd = (value: string) => {
+    addModeRef.current = true;
     setShowSetup(true);
     handleSubmit(value);
   };
